@@ -28,6 +28,20 @@ export class Size {
   }
 }
 
+function segmentIntersection(a0: Point, a1: Point, b0: Point, b1: Point) {
+  var ua = 0, ub = 0, deonminator = (b1.y - b0.y) * (a1.x - a0.x) - (b1.x - b0.x) * (a1.y - a0.y);
+  if (deonminator == 0) {
+    return null;
+  }
+  ua = ((b1.x - b0.x) * (a0.y - b0.y) - (b1.y - b0.y) * (a0.x - b0.x)) / deonminator;
+  ub = ((a1.x - a0.x) * (a0.y - b0.y) - (a1.y - a0.y) * (a0.x - b0.x)) / deonminator;
+  return {
+    intersection: new Point(a0.x + ua * (a1.x - a0.x), a0.y + ua * (a1.y - a0.y)),
+    intersectsSegmentA: ua >= 0 && ua <= 1,
+    intersectsSegmentB: ub >= 0 && ub <= 1
+  };
+}
+
 export class Point {
   x: number;
   y: number;
@@ -368,7 +382,7 @@ export class Rectangle {
     return rectangle;
   }
 
-  static createFromPoints(points: number [][]) {
+  static createFromPoints(points: number[][]) {
     let minX = minArray(points, 0);
     let maxX = maxArray(points, 0);
     let minY = minArray(points, 1);
@@ -1021,7 +1035,29 @@ export class Plot<P extends PlotProps, S> extends React.Component<P, S> {
   textPadding = 4;
 
   componentDidMount() {
-    //this.resetDeviceAndViewport(this.props.width, this.props.height);
+    this.canvas.addEventListener("mousemove", (e) => {
+      var r = this.canvas.getBoundingClientRect();
+      var p = new Point(e.clientX - r.left, -(e.clientY - r.top - r.height));
+      p.mul(this.ratio);
+      this.onMouseMove(p);
+    });
+    this.canvas.addEventListener("mouseleave", (e) => {
+      this.draw();
+    })
+  }
+  onMouseMove(dp: Point) {
+    this.draw();
+    this.drawCrosshairs(dp);
+  }
+  getInverseTransform(): Matrix {
+    let i = Matrix.createIdentity()
+    this.transform.inverse(i);
+    return i;
+  }
+  drawCrosshairs(dp: Point) {
+    this.ctx.strokeStyle = "#D0D0D0";
+    this.drawDeviceLine(new Point(0, dp.y), new Point(this.device.w, dp.y));
+    this.drawDeviceLine(new Point(dp.x, 0), new Point(dp.x, this.device.h));
   }
   resetDeviceAndViewport(w: number, h: number) {
     this.device = new Rectangle(0, 0, w * this.ratio, h * this.ratio);
@@ -1061,14 +1097,17 @@ export class Plot<P extends PlotProps, S> extends React.Component<P, S> {
     this.transform.setElements(xScale, 0, 0, yScale, xOffset, yOffset);
   }
   drawBackground() {
-    this.ctx.fillStyle = "#F0F0F0";
+    this.ctx.fillStyle = "#F7F7F7";
     let r = this.device;
     this.ctx.fillRect(0, 0, r.w, r.h);
   }
   drawLine(a: Point, b: Point) {
-    let c = this.ctx;
     a = this.transform.transformPoint(a.clone());
     b = this.transform.transformPoint(b.clone());
+    this.drawDeviceLine(a, b);
+  }
+  drawDeviceLine(a: Point, b: Point) {
+    let c = this.ctx;
     c.beginPath()
     c.moveTo(a.x, a.y);
     c.lineTo(b.x, b.y);
@@ -1083,9 +1122,9 @@ export class Plot<P extends PlotProps, S> extends React.Component<P, S> {
     c.stroke();
     c.fill();
   }
-  drawDeviceText(a: Point, text: string, dx = 0, dy = 0, hAlign = "left", vAlign = "bottom") {
+  drawDeviceText(a: Point, text: string, dx = 0, dy = 0, hAlign = "left", vAlign = "bottom", size = this.textSize) {
     let c = this.ctx;
-    c.font = (this.textSize * this.ratio) + "pt Roboto Mono";
+    c.font = (size * this.ratio) + "pt Roboto Mono";
     c.save();
     c.setTransform(1, 0, 0, 1, 0, this.device.h);
     c.textAlign = hAlign;
@@ -1240,9 +1279,9 @@ export class ScatterPlot extends Plot<ScatterPlotProps, ScatterPlotState> {
   componentWillReceiveProps(nextProps: ScatterPlotProps, nextContext: any) {
     super.componentWillReceiveProps(nextProps, nextContext);
     if (this.props.series != nextProps.series ||
-        this.props.width != nextProps.width ||
-        this.props.height != nextProps.height) {
-      this.setState({series: nextProps.series}, () => {
+      this.props.width != nextProps.width ||
+      this.props.height != nextProps.height) {
+      this.setState({ series: nextProps.series }, () => {
         this.fitSeries();
         this.draw();
       })
@@ -1306,5 +1345,55 @@ export class ScatterPlot extends Plot<ScatterPlotProps, ScatterPlotState> {
     }
 
     this.drawTickBars();
+  }
+  drawCrosshairs(dp: Point) {
+    super.drawCrosshairs(dp);
+    let p = this.getInverseTransform().transformPoint(dp.clone());
+
+
+    let series = this.state.series;
+    let intersections = [];
+    for (let j = 0; j < series.length; j++) {
+      let s = series[j];
+      let v = s.values;
+      let a0 = new Point(p.x, 0);
+      let a1 = new Point(p.x, 100);
+      for (let i = 1; i < v.length; i++) {
+        let b0 = new Point(v[i - 1][0], v[i - 1][1]);
+        let b1 = new Point(v[i][0], v[i][1]);
+        let result = segmentIntersection(a0, a1, b0, b1);
+        if (result.intersectsSegmentA && result.intersectsSegmentB) {
+          intersections.push(result.intersection);
+          this.ctx.globalAlpha = 0.2;
+          this.ctx.strokeStyle = s.color;
+          this.drawLine(result.intersection, new Point(0, result.intersection.y));
+          this.ctx.globalAlpha = 1;
+        }
+      }
+    }
+    this.ctx.fillStyle = "#000000";
+
+    intersections.forEach(p => {
+      this.drawDot(p);
+    });
+
+    intersections.sort((a, b) => {
+      return a.y - b.y;
+    });
+
+    let values = []
+    for (let i = 0; i < intersections.length; i++) {
+      values.push(intersections[i].y.toFixed(2));
+    }
+
+    let deltas = []
+    for (let i = 1; i < intersections.length; i++) {
+      deltas.push((intersections[i].y - intersections[i - 1].y).toFixed(2));
+    }
+    let s = values.join(", ");
+    if (deltas.length) {
+      s += " : " + deltas.join(", ");
+    }
+    this.drawDeviceText(dp, s, 8, 8, "left", "bottom", 10);
   }
 }

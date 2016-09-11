@@ -50,11 +50,6 @@ export class App extends React.Component<AppProps, AppState> {
                 <JobList store={this.store.jobs} onSelectChanged={this.onJobSelected.bind(this)}/>
               </div>
             </Tab>
-            <Tab eventKey={2} key="jobs" title="Jobs">
-              <div style={{padding: 10}}>
-                <JobList store={this.store.jobs} onSelectChanged={this.onJobSelected.bind(this)}/>
-              </div>
-            </Tab>
           </Tabs>
         </div>
         <div style={{display: "table-cell"}}>
@@ -64,53 +59,9 @@ export class App extends React.Component<AppProps, AppState> {
                 <Charts jobs={this.store.selectedJobs}/>
               </div>
             </Tab>
-            <Tab eventKey={4} key="report" title="Report">
-              <div style={{padding: 10}}>
-
-              </div>
-            </Tab>
           </Tabs>
         </div>
       </div>
     </div>;
-
-// <FullReport jobs={this.store.selectedJobs}/>
-
-    // <FullReport jobs={this.store.selectedJobs}/>
-
-    // <div>
-    //   <Tabs defaultActiveKey={1} animation={false} id="noanim-tab-example" style={{width: 1200}}>
-    //     <Tab eventKey={1} title="Home">
-    //       <table style={{width: 1400}}>
-    //         <tr>
-    //           <td>
-    //             <Panel header={<h2>Runs</h2>} >
-    //               <JobList store={this.store.jobs}
-    //                         onSelectChanged={this.onJobSelected.bind(this)}/>
-    //             </Panel>
-    //           </td>
-    //           <td>
-    //             <Tabs defaultActiveKey={1} animation={false} id="noanim-tab-example">
-    //               <Tab eventKey={1} key="graphs" title="Graphs">
-    //                 <Panel>
-    //                   <Charts jobs={this.store.selectedJobs}/>
-    //                 </Panel>
-    //               </Tab>
-    //               <Tab eventKey={2} key="report" title="Report">
-    //                 <Panel>
-    //                   <Report jobs={this.store.selectedJobs}/>
-    //                 </Panel>
-    //               </Tab>
-    //             </Tabs>
-    //           </td>
-    //         </tr>
-    //       </table>
-    //     </Tab>
-    //     <Tab eventKey={3} title="Timeline"></Tab>
-    //     <Tab eventKey={4} title="Images"></Tab>
-    //     <Tab eventKey={5} title="Analyzer"></Tab>
-    //     <Tab eventKey={6} title="Help"></Tab>
-    //   </Tabs>
-    // </div>
-  }x
+  }
 }

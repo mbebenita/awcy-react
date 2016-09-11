@@ -284,7 +284,7 @@ export class AppStore {
       });
       this.jobs.onChange.post("job-added");
 
-      // AppDispatcher.dispatch(new SelectJob(this.jobs.jobs[0]));
+      AppDispatcher.dispatch(new SelectJob(this.jobs.jobs[0]));
       // AppDispatcher.dispatch(new SelectJob(this.jobs.jobs[1]));
     });
   }

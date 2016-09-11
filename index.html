@@ -3,20 +3,16 @@
     <head>
         <meta charset="UTF-8" />
         <title>Are We Compressed Yet?</title>
-        <!--<link href="https://fonts.googleapis.com/css?family=Roboto:300,400,500" rel="stylesheet">-->
-        <link href="https://fonts.googleapis.com/css?family=Roboto+Mono:500" rel="stylesheet">
-
+        <link href="https://fonts.googleapis.com/css?family=Roboto+Mono:400|Roboto:500" rel="stylesheet">
 
         <!-- Latest compiled and minified CSS -->
         <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/latest/css/bootstrap.min.css">
 
         <!-- Optional theme -->
         <!--<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/latest/css/bootstrap-theme.min.css">-->
-
         <!--<link rel="stylesheet" href="https://bootswatch.com/sandstone/bootstrap.min.css">-->
-
         <link rel="stylesheet" type="text/css" href="xiphbar.css" media="screen, print">
-        <link rel="stylesheet" href="https://unpkg.com/react-select/dist/react-select.css">
+        <link rel="stylesheet" href="react-select.css">
     </head>
     <body>
         <style>
@@ -28,7 +24,10 @@
             outline: none;
             z-index: 1;
           }
-
+          .Select {
+            font-size: 12px;
+            font-family: 'Roboto Mono', monospace;
+          }
           .key {
             font-size: 12px;
             font-family: 'Roboto Mono', monospace;
@@ -37,6 +36,7 @@
             font-size: 12px;
             font-family: 'Roboto Mono', monospace;
             color: darkgray;
+            word-wrap: break-word;
           }
           .tableTitle {
             font-size: 14px;

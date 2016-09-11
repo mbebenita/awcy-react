@@ -276,7 +276,7 @@ export class AppStore {
       json.sort(function (a, b) {
         return (new Date(b.date) as any) - (new Date(a.date) as any);
       });
-      json = json.slice(0, 10);
+      json = json.slice(0, 100);
       json.forEach(o => {
         let job = Job.fromJSON(o.info);
         job.status = JobStatus.Completed;

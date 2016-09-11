@@ -41,9 +41,9 @@ export class App extends React.Component<AppProps, AppState> {
   }
 
   render() {
-    return <div style={{display: "table", paddingTop: 10, paddingLeft: 5, width: "100%"}}>
+    return <div style={{display: "table", tableLayout: "fixed", paddingTop: 10, paddingLeft: 5, width: "100%"}}>
       <div style={{display: "table-row"}}>
-        <div style={{width: "300px" , display: "table-cell"}}>
+        <div style={{width: "400px", display: "table-cell"}}>
           <Tabs defaultActiveKey={1} animation={false} id="noanim-tab-example">
             <Tab eventKey={1} key="runs" title="Runs">
               <div style={{padding: 10}}>

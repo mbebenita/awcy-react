@@ -134,7 +134,6 @@ export class Charts extends React.Component<{
         });
       }
 
-
       tables.push(<div key={video}>
         <Panel header={video}>
           <Table condensed bordered={false}>

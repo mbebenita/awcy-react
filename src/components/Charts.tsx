@@ -18,12 +18,16 @@ export class Charts extends React.Component<{
     videos: string[],
     qualities: number[],
     fit: boolean;
+    stack: boolean;
+    showReport: boolean;
     jobsToCompare: Job[]
   }> {
   constructor() {
     super();
     this.state = {
       fit: false,
+      stack: false,
+      showReport: false,
       jobsToCompare: [],
       metrics: ["MSSSIM", "PSNR HVS"],
       videos: [],
@@ -77,6 +81,12 @@ export class Charts extends React.Component<{
   onFitClick() {
     this.setState({ fit: !this.state.fit } as any);
   }
+  onStackClick() {
+    this.setState({ stack: !this.state.stack } as any);
+  }
+  onShowReportClick() {
+    this.setState({ showReport: !this.state.showReport } as any);
+  }
   render() {
     let jobs = this.props.jobs.jobs;
     if (jobs.length == 0) {
@@ -91,7 +101,6 @@ export class Charts extends React.Component<{
     let metrics = this.state.metrics;
     let qualities = this.state.qualities;
     let jobsToCompare = this.state.jobsToCompare;
-    let plotWidth = (1000 / metrics.length) | 0;
     for (let video in job.report) {
       if (this.state.videos.length && this.state.videos.indexOf(video) < 0) {
         continue;
@@ -100,38 +109,70 @@ export class Charts extends React.Component<{
       let headers = metrics.map(name =>
         <th key={name} className="tableHeader">{name}</th>
       );
-      let cols = metrics.map(metric =>
-        <td key={metric} style={{ padding: 0 }}>
-          <ScatterPlot width={plotWidth} height={200} series={this.getSeries(video, metric)} />
-        </td>
-      );
-      tables.push(<div key={video} style={{ width: "1000px" }}>
-        <div className="tableTitle">{video}</div>
-        <Table striped condensed hover>
-          <thead>
-            <tr>
-              {headers}
-            </tr>
-          </thead>
-          <tbody>
-            <tr key={video}>{cols}</tr>
-          </tbody>
-        </Table>
-        <VideoReport name={video} job={jobsToCompare[0]} otherJob={jobsToCompare[1]} highlightColumns={metrics} filterQualities={qualities} />
+      let rows, cols;
+      if (!this.state.stack) {
+        let plotWidth = (940 / metrics.length) | 0;
+        let plotHeight = 200;
+        cols = metrics.map(metric =>
+          <td key={metric} style={{ padding: 0 }}>
+            <ScatterPlot width={plotWidth} height={plotHeight} series={this.getSeries(video, metric)} />
+          </td>
+        );
+        rows = [<tr key={video}>{cols}</tr>];
+      } else {
+        let plotWidth = 940;
+        let plotHeight = 400;
+        headers = [<th key={name} className="tableHeader"></th>];
+        rows = [];
+        metrics.forEach(metric => {
+          rows.push(<tr key={metric + "-Header"}><td className="tableHeader">{metric}</td></tr>);
+          rows.push(<tr key={metric}>
+            <td style={{ padding: 0 }}>
+              <ScatterPlot width={plotWidth} height={plotHeight} series={this.getSeries(video, metric)} />
+            </td>
+          </tr>);
+        });
+      }
+
+
+      tables.push(<div key={video}>
+        <Panel header={video}>
+          <Table condensed bordered={false}>
+            <thead>
+              <tr>
+                {headers}
+              </tr>
+            </thead>
+            <tbody>
+              {rows}
+            </tbody>
+          </Table>
+          <VideoReport name={video} job={jobsToCompare[0]} otherJob={jobsToCompare[1]} highlightColumns={metrics} filterQualities={qualities} />
+        </Panel>
       </div>
       );
     }
-    return <div>
-      <div style={{ width: "1000px" }}>
+    let report = null;
+    if (this.state.showReport) {
+      report = <VideoReport job={jobsToCompare[0]} otherJob={jobsToCompare[1]} highlightColumns={metrics} filterQualities={qualities} />
+    }
+    return <div style={{ width: "980px" }}>
+      <div>
         <JobSelector metrics={this.state.metrics} jobs={this.props.jobs.jobs} onChange={this.onJobSelectorChange.bind(this)} />
       </div>
-      <div style={{ paddingBottom: 8, paddingTop: 4 }}>
-        <div className="selectTitle">Chart Options</div>
-        <Button active={this.state.fit} onClick={this.onFitClick.bind(this)}>Fit Chart</Button>
+      <div style={{ paddingTop: 8 }}>
+        <div style={{ paddingBottom: 8 }}>
+          <Button active={this.state.showReport} onClick={this.onShowReportClick.bind(this)}>{this.state.showReport ? "Hide" : "View"} Summary Report</Button>
+        </div>
+        {report}
+        <div style={{ paddingBottom: 8, paddingTop: 4 }}>
+          <Panel header="Chart Options">
+            <Button active={this.state.fit} onClick={this.onFitClick.bind(this)}>Scale Charts</Button>{' '}
+            <Button active={this.state.stack} onClick={this.onStackClick.bind(this)}>Enlarge Charts</Button>
+          </Panel>
+        </div>
+        {tables}
       </div>
-      {tables[0]}
-      <VideoReport job={jobsToCompare[0]} otherJob={jobsToCompare[1]} highlightColumns={metrics} filterQualities={qualities} />
-      {tables.slice(1)}
     </div>;
   }
 }

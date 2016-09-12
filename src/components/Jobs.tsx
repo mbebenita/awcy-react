@@ -1,17 +1,18 @@
 import * as React from "react";
-import { AppDispatcher, Action, SelectJob, DeselectJob } from "../dispatchers/Dispatcher"
+import { AppDispatcher, Action, SelectJob, DeselectJob, CancelJob, SubmitJob } from "../dispatchers/Dispatcher"
 import { ListGroup, ListGroupItem } from "react-bootstrap";
 import { Popover, OverlayTrigger, Navbar, Checkbox, Form, FormGroup, ControlLabel, FormControl, HelpBlock, Modal, Panel, Label, Col, Row, Button, ProgressBar, Badge, ButtonToolbar, DropdownButton, MenuItem } from "react-bootstrap";
 
 import { AppStore, Jobs, Job, JobStatus, JobProgress } from "../stores/Stores";
 import { Option } from "./Widgets"
+let Select = require('react-select');
 
 declare var tinycolor: any;
-let Select = require('react-select');
 
 export class JobListItem extends React.Component<{
   job: Job;
   detailed?: boolean;
+  onCancel?: (job: Job) => void;
 }, {
     job: Job,
     progress: JobProgress;
@@ -29,7 +30,7 @@ export class JobListItem extends React.Component<{
     });
   }
   onCancelClick() {
-    this.setState({showCancelModal: true} as any);
+    this.setState({ showCancelModal: true } as any);
   }
   onToggleSelectionClick() {
     let job = this.state.job;
@@ -40,26 +41,13 @@ export class JobListItem extends React.Component<{
     }
   }
   abortCancel() {
-    this.setState({showCancelModal: false} as any);
+    this.setState({ showCancelModal: false } as any);
   }
   confirmCancel() {
     this.abortCancel();
+    this.props.onCancel(this.state.job);
   }
   render() {
-    if (this.state.showCancelModal) {
-      return <Modal show={true} onHide={this.abortCancel.bind(this)}>
-        <Modal.Header closeButton>
-          <Modal.Title>Cancel job?</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          <h5>Are you sure you want to cancel {this.state.job.id}?</h5>
-        </Modal.Body>
-        <Modal.Footer>
-          <Button onClick={this.confirmCancel.bind(this)}>Yes</Button>
-          <Button onClick={this.abortCancel.bind(this)}>No</Button>
-        </Modal.Footer>
-      </Modal>
-    }
     let job = this.props.job;
     let color = job.color ? tinycolor(job.color).desaturate().toString() : "";
     let progress = null;
@@ -83,15 +71,28 @@ export class JobListItem extends React.Component<{
         <div key="7" className="keyValuePair"><span className="key">Save Encoded Files</span>: <span className="value">{String(job.saveEncodedFiles)}</span></div>
       ];
     }
-
     let cancel = null;
     let select = null;
     if (job.status == JobStatus.Pending || job.status == JobStatus.Running) {
-      cancel = <Button bsStyle="danger" onClick={this.onCancelClick.bind(this)}>Cancel</Button>;
+      if (this.props.onCancel) {
+        cancel = <Button bsStyle="danger" onClick={this.onCancelClick.bind(this)}>Cancel</Button>;
+      }
     } else {
       select = <Button onClick={this.onToggleSelectionClick.bind(this)}>{job.selected ? "Deselect" : "Select"}</Button>
     }
     return <div className="list-group-item" style={{ backgroundColor: color }}>
+      <Modal show={this.state.showCancelModal} onHide={this.abortCancel.bind(this)}>
+        <Modal.Header closeButton>
+          <Modal.Title>Cancel job?</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <h5>Are you sure you want to cancel {this.state.job.id}?</h5>
+        </Modal.Body>
+        <Modal.Footer>
+          <Button onClick={this.confirmCancel.bind(this)}>Yes</Button>
+          <Button onClick={this.abortCancel.bind(this)}>No</Button>
+        </Modal.Footer>
+      </Modal>
       {progress}
       <div className="keyValuePair"><span className="key">ID</span>: <span className="value">{job.id}</span></div>
       <div className="keyValuePair"><span className="key">Codec</span>: <span className="value">{job.codec}</span></div>
@@ -105,87 +106,56 @@ export class JobListItem extends React.Component<{
   }
 }
 
-
-export interface JobsProps {
-  store: Jobs;
-  jobStatusFilter?: JobStatus;
-  onSelectChanged?: (job: Job) => void;
-  detailed?: boolean;
-}
-
-export interface JobsState {
-  jobs: Job[];
-  jobStatusFilter: JobStatus;
-  showCreateJobForm: boolean;
-  jobToCreate: Job;
-  codec: Option;
-  set: Option;
-  author: Option;
-  configs: Option[];
-}
-
-
-export class JobList extends React.Component<JobsProps, JobsState> {
+export class SubmitJobForm extends React.Component<{
+  onCreate: (job: Job) => void;
+  onCancel: () => void;
+}, {
+    job: Job;
+    set: Option;
+    codec: Option;
+  }> {
   constructor() {
     super();
     this.state = {
-      jobs: [],
-      jobStatusFilter: JobStatus.All,
-      showCreateJobForm: false,
-      jobToCreate: null
+      job: null,
+      set: null,
+      codec: null
     };
   }
-
-  componentDidMount() {
-    this.props.store.onChange.attach(() => {
-      this.setState({ jobs: this.props.store.jobs } as any);
-    });
-    if (this.props.jobStatusFilter !== undefined) {
-      this.setState({jobStatusFilter: this.props.jobStatusFilter} as any);
-    }
+  componentWillMount() {
+    this.setState({ job: new Job() } as any);
   }
-
-  onViewLogClick() {
-
-  }
-
-  onSelectChanged(job: Job) {
-    this.props.onSelectChanged(job);
-  }
-
-  createNewJob() {
-    this.props.store.addJob(this.state.jobToCreate);
-    this.hideCreateNewJobForm();
-  }
-
-  showJobCreateForm() {
-    let job = new Job();
-    job.codec = "av1";
-    job.task = "objective-1-fast";
-    this.setState({ showCreateJobForm: true, jobToCreate: job } as any);
-  }
-
-  hideCreateNewJobForm() {
-    this.setState({ showCreateJobForm: false, jobToCreate: null } as any);
-  }
-
-  onJobToCreateChange(key: string, e: any) {
-    let job = this.state.jobToCreate;
-    if (e.target.type === "checkbox") {
-      job[key] = e.target.checked;
-    } else {
-      job[key] = e.target.value;
-    }
-    this.setState({ jobToCreate: job } as any);
-  }
-
-  getValidationState(key: string): "error" | "success" {
-    let job = this.state.jobToCreate;
-    switch (key) {
+  getValidationState(name?: string): "success" | "warning" | "error" {
+    let job = this.state.job;
+    switch (name) {
+      case "all":
+        return ["id", "commit", "codec", "set", "nick", "qualities"].every(name =>
+          (this.getValidationState(name) === "success")
+        ) ? "success" : "error";
       case "id":
-        if (job.id.length === 0) {
-          return "error";
+        if (job.id) {
+          return "success";
         }
+        break;
+      case "commit":
+        let commit = job.commit.toLowerCase().trim();
+        if (commit.length == 40) {
+          for (let i = 0; i < commit.length; i++) {
+            if ("abcdef0123456789".indexOf(commit[i]) < 0) {
+              return "error";
+            }
+          }
+          return "success";
+        }
+        break;
+      case "codec":
+        if (this.state.codec) return "success";
+        break;
+      case "set":
+        if (this.state.set) return "success";
+        break;
+      case "nick":
+        if (job.nick) return "success";
         break;
       case "qualities":
         if (job.qualities.length === 0) {
@@ -198,119 +168,176 @@ export class JobList extends React.Component<JobsProps, JobsState> {
             return "success";
           }
         }
-        return "error";
+        break;
     }
-    return "success";
+    return "error";
+  }
+  onInputChange(key: string, e: any) {
+    let job = this.state.job;
+    if (e.target.type === "checkbox") {
+      job[key] = e.target.checked;
+    } else {
+      job[key] = e.target.value;
+    }
+    this.setState({ job } as any);
+  }
+  onCreate() {
+    let job = this.state.job;
+    job.task = this.state.set.value;
+    job.codec = this.state.codec.value;
+    this.props.onCreate(job);
+  }
+  onCancel() {
+    this.props.onCancel();
+  }
+  onChangeCodec(codec: Option) {
+    this.setState({ codec } as any, () => { });
   }
 
-  jobCreateFormEl() {
+  onChangeSet(set: Option) {
+    this.setState({ set } as any, () => { });
+  }
+
+  onChangeAuthor(author: Option) {
+    this.setState({ author } as any, () => { });
+  }
+
+  onChangeConfigs(configs: Option) {
+    this.setState({ configs } as any, () => { });
+  }
+  render() {
+    let job = this.state.job;
+
     let codecOptions = [];
     for (let key in Job.codecs) {
-      codecOptions.push(<option key={key} value={key}>{Job.codecs[key]}</option>);
+      let name = Job.codecs[key];
+      codecOptions.push({ value: key, label: name });
     }
 
     let setOptions = [];
     for (let key in Job.sets) {
-      setOptions.push(<option key={key} value={key}>{key}</option>);
+      let set = Job.sets[key];
+      setOptions.push({ value: key, label: key });
     }
 
-    const qualitiesPopover = (
-      <Popover id="qualitiesPopover" title="QP Values">
-        You many optionally specify a list of QP values, separted by space.
-      </Popover>
-    );
-
-    let job = this.state.jobToCreate;
     return <Form>
       <FormGroup validationState={this.getValidationState("id")}>
         <ControlLabel>ID</ControlLabel>
         <FormControl type="text" placeholder=""
-          value={job.id} onChange={this.onJobToCreateChange.bind(this, "id")} />
-        <FormControl.Feedback />
+          value={job.id} onChange={this.onInputChange.bind(this, "id")} />
       </FormGroup>
-      <FormGroup>
+
+      <FormGroup validationState={this.getValidationState("commit")}>
         <ControlLabel>Git Commit Hash</ControlLabel>
         <FormControl type="text" placeholder="e.g. 9368c05596d517c280146a1b815ec0ecc25e787c"
-          value={job.commit} onChange={this.onJobToCreateChange.bind(this, "commit")} />
+          value={job.commit} onChange={this.onInputChange.bind(this, "commit")} />
       </FormGroup>
-      <FormGroup>
+
+      <FormGroup validationState={this.getValidationState("codec")}>
         <ControlLabel>Codec</ControlLabel>
-        <FormControl componentClass="select" placeholder="select"
-          value={job.codec} onChange={this.onJobToCreateChange.bind(this, "codec")}>
-          {codecOptions}
-        </FormControl>
+        <Select placeholder="Codec" value={this.state.codec} options={codecOptions} onChange={this.onChangeCodec.bind(this)} />
       </FormGroup>
-      <FormGroup>
-        <ControlLabel>Subset</ControlLabel>
-        <FormControl componentClass="select" placeholder="select"
-          value={job.task} onChange={this.onJobToCreateChange.bind(this, "task")}>
-          {setOptions}
-        </FormControl>
+
+      <FormGroup validationState={this.getValidationState("set")}>
+        <ControlLabel>Set</ControlLabel>
+        <Select placeholder="Set" value={this.state.set} options={setOptions} onChange={this.onChangeSet.bind(this)} />
       </FormGroup>
+
       <FormGroup>
         <ControlLabel>Extra CLI Options</ControlLabel>
         <FormControl type="text"
-          value={job.extraOptions} onChange={this.onJobToCreateChange.bind(this, "extraOptions")} />
+          value={job.extraOptions} onChange={this.onInputChange.bind(this, "extraOptions")} />
       </FormGroup>
+
       <FormGroup>
         <ControlLabel>Extra Build Options</ControlLabel>
         <FormControl type="text"
-          value={job.buildOptions} onChange={this.onJobToCreateChange.bind(this, "buildOptions")} />
+          value={job.buildOptions} onChange={this.onInputChange.bind(this, "buildOptions")} />
       </FormGroup>
-      <FormGroup validationState={this.getValidationState("qualities")}>
-        <ControlLabel>Custom Qualities</ControlLabel>
-        <OverlayTrigger trigger={['hover', 'focus']} placement="bottom" overlay={qualitiesPopover}>
-          <FormControl type="text" placeholder="30 40 50 ..."
-            value={job.qualities} onChange={this.onJobToCreateChange.bind(this, "qualities")} />
-        </OverlayTrigger>
-        <FormControl.Feedback />
-      </FormGroup>
-      <FormGroup>
+
+      <FormGroup validationState={this.getValidationState("nick")}>
         <ControlLabel>Your IRC nick (for auto-notifications on #daala)</ControlLabel>
         <FormControl type="text"
-          value={job.nick} onChange={this.onJobToCreateChange.bind(this, "nick")} />
+          value={job.nick} onChange={this.onInputChange.bind(this, "nick")} />
       </FormGroup>
-      <FormGroup>
-        <Checkbox inline checked={job.runABCompare} onChange={this.onJobToCreateChange.bind(this, "runABCompare")}>
-          Run AB Compare
-        </Checkbox>
-        {' '}
-        <Checkbox inline checked={job.saveEncodedFiles} onChange={this.onJobToCreateChange.bind(this, "saveEncodedFiles")}>
-          Save Encoded Files (.ivf)
-        </Checkbox>
+
+      <FormGroup validationState={this.getValidationState("qualities")}>
+        <ControlLabel>Custom Qualities</ControlLabel>
+        <FormControl type="text" placeholder="30 40 50 ..."
+          value={job.qualities} onChange={this.onInputChange.bind(this, "qualities")} />
       </FormGroup>
+
       <FormGroup>
         <ButtonToolbar>
-          <Button bsStyle="success" onClick={this.createNewJob.bind(this)}>Submit</Button>
-          <Button bsStyle="danger" onClick={this.hideCreateNewJobForm.bind(this)}>Cancel</Button>
+          <Button disabled={this.getValidationState("all") === "error"} bsStyle="success" onClick={this.onCreate.bind(this)}>Submit</Button>
+          <Button bsStyle="danger" onClick={this.onCancel.bind(this)}>Cancel</Button>
         </ButtonToolbar>
       </FormGroup>
     </Form>
   }
+}
+
+export class JobList extends React.Component<{
+  store: Jobs;
+  jobStatusFilter?: JobStatus;
+  onSelectChanged?: (job: Job) => void;
+  detailed?: boolean;
+}, {
+    jobs: Job[];
+    jobStatusFilter: JobStatus;
+    showSubmitJobForm: boolean;
+    set: Option;
+    codec: Option;
+    author: Option;
+    configs: Option[];
+  }> {
+  constructor() {
+    super();
+    this.state = {
+      jobs: [],
+      jobStatusFilter: JobStatus.All,
+      showSubmitJobForm: false,
+    };
+  }
+
+  componentDidMount() {
+    this.props.store.onChange.attach(() => {
+      this.setState({ jobs: this.props.store.jobs } as any);
+    });
+    if (this.props.jobStatusFilter !== undefined) {
+      this.setState({ jobStatusFilter: this.props.jobStatusFilter } as any);
+    }
+  }
+
+  onSelectChanged(job: Job) {
+    this.props.onSelectChanged(job);
+  }
 
   onChangeCodec(codec: Option) {
-    this.setState({ codec } as any, () => {
-    });
+    this.setState({ codec } as any, () => { });
   }
 
   onChangeSet(set: Option) {
-    this.setState({ set } as any, () => {
-    });
+    this.setState({ set } as any, () => { });
   }
 
   onChangeAuthor(author: Option) {
-    this.setState({ author } as any, () => {
-    });
+    this.setState({ author } as any, () => { });
   }
 
   onChangeConfigs(configs: Option) {
-    this.setState({ configs } as any, () => {
-    });
+    this.setState({ configs } as any, () => { });
   }
 
-  jobListEl() {
-    // <Button bsStyle="danger" onClick={this.cancelAllJobs.bind(this)}>Delete All Jobs</Button>
-    // <Button bsStyle="success" onClick={this.showJobCreateForm.bind(this)}>Submit New Job</Button>
+  onCancelJob(job: Job) {
+    AppDispatcher.dispatch(new CancelJob(job));
+  }
+
+  onSubmitNewJobClick() {
+    this.setState({ showSubmitJobForm: true } as any);
+  }
+
+  makeJobList() {
     let jobs = this.state.jobs;
 
     let codecOptions = [];
@@ -327,7 +354,6 @@ export class JobList extends React.Component<JobsProps, JobsState> {
 
     let authorOptions = [];
     let configOptions = [];
-
     let uniqueAuthors = [];
     let uniqueBuildsFlags = [];
     jobs.forEach(job => {
@@ -348,6 +374,9 @@ export class JobList extends React.Component<JobsProps, JobsState> {
       return { value: author, label: author };
     });
     return <div>
+      <div style={{ width: "100%", paddingBottom: "10px" }}>
+        <Button bsStyle="success" onClick={this.onSubmitNewJobClick.bind(this)}>Submit New Job</Button>
+      </div>
       <div style={{ display: "table", width: "100%" }}>
         <div style={{ display: "table-row" }}>
           <div style={{ display: "table-cell", paddingRight: "5px" }}>
@@ -387,18 +416,25 @@ export class JobList extends React.Component<JobsProps, JobsState> {
             }
             return true;
           }).map((job: Job) => {
-            return <JobListItem detailed={this.props.detailed} key={job.id} job={job}></JobListItem>
+            return <JobListItem detailed={this.props.detailed} key={job.id} job={job} onCancel={this.onCancelJob.bind(this)}></JobListItem>
           })}
         </ListGroup>
       </div>
     </div>
   }
 
+  hideSubmitJobForm() {
+    this.setState({ showSubmitJobForm: false } as any);
+  }
+  onSubmitJob(job: Job) {
+    this.hideSubmitJobForm();
+    AppDispatcher.dispatch(new SubmitJob(job));
+  }
   render() {
-    if (this.state.showCreateJobForm) {
-      return this.jobCreateFormEl()
+    if (this.state.showSubmitJobForm) {
+      return <SubmitJobForm onCreate={this.onSubmitJob.bind(this)} onCancel={this.hideSubmitJobForm.bind(this)} />
     } else {
-      return this.jobListEl();
+      return this.makeJobList();
     }
   }
 }

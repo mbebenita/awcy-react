@@ -1,4 +1,4 @@
-import { AppDispatcher, Action, SelectJob, DeselectJob } from "../dispatchers/Dispatcher"
+import { AppDispatcher, Action, SelectJob, DeselectJob, CancelJob } from "../dispatchers/Dispatcher"
 import { Promise } from "es6-promise"
 import { AsyncEvent } from 'ts-events';
 
@@ -269,6 +269,13 @@ export class AppStore {
         job.color = "";
         job.onChange.post("job-changed");
         this.selectedJobs.removeJob(job);
+      } else if (action instanceof CancelJob) {
+        let job = action.job;
+        this.jobs.removeJob(job);
+        if (this.runningJob === job) {
+          this.runningJob = null
+        }
+        this.onRunningJobChange.post("job-cancelled");
       }
     });
   }

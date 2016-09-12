@@ -98,14 +98,6 @@ export class Point {
   static createEmpty(): Point {
     return new Point(0, 0);
   }
-
-  static createEmptyPoints(count: number): Point[] {
-    var result = [];
-    for (var i = 0; i < count; i++) {
-      result.push(new Point(0, 0));
-    }
-    return result;
-  }
 }
 
 export class Rectangle {

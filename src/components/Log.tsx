@@ -53,9 +53,6 @@ export class AppStatus extends React.Component<{
     });
   }
   render() {
-    if (!this.state.runningJob) {
-      return null;
-    }
     let table = null;
     let status = "";
     if (this.state.aws) {
@@ -93,13 +90,20 @@ export class AppStatus extends React.Component<{
         }
       }
     }
-    return <div>
-      <Panel header="Running Job Info">
+    let info = null;
+    let log = null;
+    if (this.state.runningJob) {
+      info = <Panel header="Running Job Info">
         <JobListItem detailed job={this.state.runningJob}/>
       </Panel>
-      <Panel header="Running Job Log">
+      log = <Panel header="Running Job Log">
         <Log job={this.state.runningJob} />
       </Panel>
+    }
+
+    return <div>
+      {info}
+      {log}
       <Panel header={"AWS Status " + status}>
         {table}
       </Panel>

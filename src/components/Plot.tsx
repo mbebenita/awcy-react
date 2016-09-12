@@ -1394,6 +1394,6 @@ export class ScatterPlot extends Plot<ScatterPlotProps, ScatterPlotState> {
     if (deltas.length) {
       s += " : " + deltas.join(", ");
     }
-    this.drawDeviceText(dp, s, 8, 8, "left", "bottom", 10);
+    this.drawDeviceText(dp, s, 8, 8, "left", "bottom", 8);
   }
 }

@@ -3,26 +3,33 @@ import { AppDispatcher, Action, SelectJob, DeselectJob } from "../dispatchers/Di
 import { ListGroup, ListGroupItem } from "react-bootstrap";
 import { Popover, OverlayTrigger, Navbar, Checkbox, Form, FormGroup, ControlLabel, FormControl, HelpBlock, Modal, Panel, Label, Col, Row, Button, ProgressBar, Badge, ButtonToolbar, DropdownButton, MenuItem } from "react-bootstrap";
 
-import { AppStore, Jobs, Job, JobStatus } from "../stores/Stores";
+import { AppStore, Jobs, Job, JobStatus, JobProgress } from "../stores/Stores";
 import { Option } from "./Widgets"
 
 declare var tinycolor: any;
 let Select = require('react-select');
 
 export class JobListItem extends React.Component<{
-  job: Job
+  job: Job;
+  detailed?: boolean;
 }, {
-    job: Job
+    job: Job,
+    progress: JobProgress;
+    showCancelModal: boolean;
   }> {
   componentWillMount() {
     let job = this.props.job;
-    this.state = { job };
+    this.state = {
+      job,
+      progress: new JobProgress(0, 0),
+      showCancelModal: false
+    };
     job.onChange.attach(() => {
-      this.setState({ job });
+      this.setState({ job, progress: job.progress } as any);
     });
   }
   onCancelClick() {
-
+    this.setState({showCancelModal: true} as any);
   }
   onToggleSelectionClick() {
     let job = this.state.job;
@@ -32,24 +39,67 @@ export class JobListItem extends React.Component<{
       AppDispatcher.dispatch(new SelectJob(this.state.job));
     }
   }
+  abortCancel() {
+    this.setState({showCancelModal: false} as any);
+  }
+  confirmCancel() {
+    this.abortCancel();
+  }
   render() {
+    if (this.state.showCancelModal) {
+      return <Modal show={true} onHide={this.abortCancel.bind(this)}>
+        <Modal.Header closeButton>
+          <Modal.Title>Cancel job?</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <h5>Are you sure you want to cancel {this.state.job.id}?</h5>
+        </Modal.Body>
+        <Modal.Footer>
+          <Button onClick={this.confirmCancel.bind(this)}>Yes</Button>
+          <Button onClick={this.abortCancel.bind(this)}>No</Button>
+        </Modal.Footer>
+      </Modal>
+    }
     let job = this.props.job;
     let color = job.color ? tinycolor(job.color).desaturate().toString() : "";
-    // <div className="keyValuePair"><span className="key">Build Options</span>: <span className="value">{job.buildOptions}</span></div>
-    //   <div className="keyValuePair"><span className="key">Extra Options</span>: <span className="value">{job.extraOptions}</span></div>
-    //   <div className="keyValuePair"><span className="key">Nick</span>: <span className="value">{job.nick}</span></div>
-    //   <div className="keyValuePair"><span className="key">Qualities</span>: <span className="value">{job.qualities}</span></div>
-    //   <div className="keyValuePair"><span className="key">Task</span>: <span className="value">{job.task}</span></div>
-    //   <div className="keyValuePair"><span className="key">Task Type</span>: <span className="value">{job.taskType}</span></div>
-    //   <div className="keyValuePair"><span className="key">Run A/B Compare</span>: <span className="value">{String(job.runABCompare)}</span></div>
-    //   <div className="keyValuePair"><span className="key">Save Encoded Files</span>: <span className="value">{String(job.saveEncodedFiles)}</span></div>
+    let progress = null;
+    let jobProgress = this.state.progress;
+    if (job.status === JobStatus.Running) {
+      let value = jobProgress.total ? jobProgress.value / jobProgress.total : 0;
+      progress = <ProgressBar active now={100 * value} label={`${jobProgress.value} of ${jobProgress.total}`} />
+    } else if (job.status === JobStatus.Pending) {
+      progress = <ProgressBar now={0} />
+    }
+    let details = null;
+    if (this.props.detailed) {
+      details = [
+        <div key="0" className="keyValuePair"><span className="key">Build Options</span>: <span className="value">{job.buildOptions}</span></div>,
+        <div key="1" className="keyValuePair"><span className="key">Extra Options</span>: <span className="value">{job.extraOptions}</span></div>,
+        <div key="2" className="keyValuePair"><span className="key">Nick</span>: <span className="value">{job.nick}</span></div>,
+        <div key="3" className="keyValuePair"><span className="key">Qualities</span>: <span className="value">{job.qualities}</span></div>,
+        <div key="4" className="keyValuePair"><span className="key">Task</span>: <span className="value">{job.task}</span></div>,
+        <div key="5" className="keyValuePair"><span className="key">Task Type</span>: <span className="value">{job.taskType}</span></div>,
+        <div key="6" className="keyValuePair"><span className="key">Run A/B Compare</span>: <span className="value">{String(job.runABCompare)}</span></div>,
+        <div key="7" className="keyValuePair"><span className="key">Save Encoded Files</span>: <span className="value">{String(job.saveEncodedFiles)}</span></div>
+      ];
+    }
+
+    let cancel = null;
+    let select = null;
+    if (job.status == JobStatus.Pending || job.status == JobStatus.Running) {
+      cancel = <Button bsStyle="danger" onClick={this.onCancelClick.bind(this)}>Cancel</Button>;
+    } else {
+      select = <Button onClick={this.onToggleSelectionClick.bind(this)}>{job.selected ? "Deselect" : "Select"}</Button>
+    }
     return <div className="list-group-item" style={{ backgroundColor: color }}>
+      {progress}
       <div className="keyValuePair"><span className="key">ID</span>: <span className="value">{job.id}</span></div>
       <div className="keyValuePair"><span className="key">Codec</span>: <span className="value">{job.codec}</span></div>
       <div className="keyValuePair"><span className="key">Commit</span>: <span className="value">{job.commit}</span></div>
+      {details}
       <ButtonToolbar style={{ paddingTop: 8 }}>
-        {job.status == JobStatus.Pending ? <Button bsStyle="danger" onClick={this.onCancelClick.bind(this)}>Cancel</Button> : null}
-        <Button onClick={this.onToggleSelectionClick.bind(this)}>{job.selected ? "Deselect" : "Select"}</Button>
+        {cancel}
+        {select}
       </ButtonToolbar>
     </div>;
   }
@@ -57,13 +107,15 @@ export class JobListItem extends React.Component<{
 
 
 export interface JobsProps {
-  store: Jobs,
-  onSelectChanged?: (job: Job) => void
+  store: Jobs;
+  jobStatusFilter?: JobStatus;
+  onSelectChanged?: (job: Job) => void;
+  detailed?: boolean;
 }
 
 export interface JobsState {
   jobs: Job[];
-  showConfirmCancelModal: boolean;
+  jobStatusFilter: JobStatus;
   showCreateJobForm: boolean;
   jobToCreate: Job;
   codec: Option;
@@ -78,7 +130,7 @@ export class JobList extends React.Component<JobsProps, JobsState> {
     super();
     this.state = {
       jobs: [],
-      showConfirmCancelModal: false,
+      jobStatusFilter: JobStatus.All,
       showCreateJobForm: false,
       jobToCreate: null
     };
@@ -88,27 +140,9 @@ export class JobList extends React.Component<JobsProps, JobsState> {
     this.props.store.onChange.attach(() => {
       this.setState({ jobs: this.props.store.jobs } as any);
     });
-  }
-
-  jobToCancel: Job;
-  onCancelClick(job: Job) {
-    this.jobToCancel = job;
-    this.setState({ showConfirmCancelModal: true } as any);
-  }
-
-  confirmCancel() {
-    this.props.store.removeJob(this.jobToCancel);
-    this.jobToCancel = null;
-    this.setState({ showConfirmCancelModal: false } as any);
-  }
-
-  abortCancel() {
-    this.jobToCancel = null;
-    this.setState({ showConfirmCancelModal: false } as any);
-  }
-
-  cancelAllJobs() {
-    this.props.store.cancelAllJobs();
+    if (this.props.jobStatusFilter !== undefined) {
+      this.setState({jobStatusFilter: this.props.jobStatusFilter} as any);
+    }
   }
 
   onViewLogClick() {
@@ -254,21 +288,6 @@ export class JobList extends React.Component<JobsProps, JobsState> {
     </Form>
   }
 
-  jobCancelModalEl() {
-    return <Modal show={this.state.showConfirmCancelModal} onHide={this.abortCancel.bind(this)}>
-      <Modal.Header closeButton>
-        <Modal.Title>Cancel Job?</Modal.Title>
-      </Modal.Header>
-      <Modal.Body>
-        <h4>Are you sure you want to cancel the job?</h4>
-      </Modal.Body>
-      <Modal.Footer>
-        <Button onClick={this.confirmCancel.bind(this)}>Yes</Button>
-        <Button onClick={this.abortCancel.bind(this)}>No</Button>
-      </Modal.Footer>
-    </Modal>
-  }
-
   onChangeCodec(codec: Option) {
     this.setState({ codec } as any, () => {
     });
@@ -347,9 +366,11 @@ export class JobList extends React.Component<JobsProps, JobsState> {
       </div>
 
       <div style={{ height: "600px", overflow: "scroll" }}>
-        {this.jobCancelModalEl()}
         <ListGroup componentClass="ul">
           {jobs.filter((job: Job) => {
+            if (!(job.status & this.state.jobStatusFilter)) {
+              return false;
+            }
             if (this.state.author && job.nick != this.state.author.value) {
               return false;
             }
@@ -366,7 +387,7 @@ export class JobList extends React.Component<JobsProps, JobsState> {
             }
             return true;
           }).map((job: Job) => {
-            return <JobListItem key={job.id} job={job}></JobListItem>
+            return <JobListItem detailed={this.props.detailed} key={job.id} job={job}></JobListItem>
           })}
         </ListGroup>
       </div>

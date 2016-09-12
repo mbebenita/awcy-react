@@ -3,6 +3,8 @@ import { Promise } from "es6-promise"
 import { AsyncEvent } from 'ts-events';
 
 let baseUrl = "https://arewecompressedyet.com/";
+let betaBaseUrl = "https://beta.arewecompressedyet.com/";
+
 
 function zip(a: string [], b: any []) {
   let o = {};
@@ -27,10 +29,11 @@ export function loadXHR(path: string, next: (json: any) => void, type = "json") 
 }
 
 export enum JobStatus {
-  None,
-  Running,
-  Pending,
-  Completed
+  None = 0,
+  Running = 1,
+  Pending = 2,
+  Completed = 4,
+  All = Running | Pending | Completed
 }
 
 export enum ReportField {
@@ -67,6 +70,13 @@ export function metricNameToReportFieldIndex(name: string) {
   return 3 + metricNames.indexOf(name);
 }
 
+export class JobProgress {
+  constructor(
+    public value: number,
+    public total: number) {
+    // ...
+  }
+}
 export class Job {
   codec: string = "";
   commit: string = "";
@@ -80,19 +90,32 @@ export class Job {
   runABCompare: boolean = false;
   saveEncodedFiles: boolean = false;
   status: JobStatus = JobStatus.None;
-  logText: string = "";
-  onLogTextChange = new AsyncEvent<string>();
+  log: string = "";
+  progress: JobProgress = new JobProgress(0, 0);
   selected: boolean = false;
   color: string = "";
   onChange = new AsyncEvent<string>();
   constructor() {
 
   }
-  loadLog(path: string) {
-    loadXHR(path, (text) => {
-      this.logText = text;
-      this.onLogTextChange.post("log-updated");
-    }, "text");
+  loadLog(refresh = false): Promise<string> {
+    if (this.log && !refresh) {
+      return Promise.resolve(this.log);
+    }
+    return new Promise((resolve, reject) => {
+      let path = baseUrl + `runs/${this.id}/output.txt`;
+      loadXHR(path, (text) => {
+        this.log = text;
+        let lastLine = text.match(/([0-9]+) out of ([0-9]+)/g).slice(-1)[0].split(' ');
+        if (lastLine) {
+          let value = Number(lastLine[0]);
+          let total = Number(lastLine[3]);
+          this.progress = new JobProgress(value, total);
+          this.onChange.post("progress");
+        }
+        resolve(text);
+      }, "text");
+    })
   }
 
   loadFile(path: string): Promise<string> {
@@ -222,11 +245,17 @@ export class AppStore {
   jobs: Jobs;
   selectedJobs: Jobs;
   onChange = new AsyncEvent<string>();
+  runningJob: Job;
+  onRunningJobChange = new AsyncEvent<string>();
+
+  aws: any;
+  onAWSChange = new AsyncEvent<string>();
 
   constructor() {
     this.jobs = new Jobs();
     this.selectedJobs = new Jobs();
-
+    this.runningJob = null;
+    this.aws = {};
     AppDispatcher.register((action) => {
       if (action instanceof SelectJob) {
         let job = action.job;
@@ -246,30 +275,41 @@ export class AppStore {
   load() {
     this.loadJobs();
   }
+  loadAWS() {
+    loadXHR(betaBaseUrl + "describeAutoScalingInstances", (json) => {
+      this.aws.AutoScalingInstances = json.AutoScalingInstances;
+      this.onAWSChange.post("loaded");
+    });
+    loadXHR(betaBaseUrl + "describeAutoScalingGroups", (json) => {
+      this.aws.AutoScalingGroups = json.AutoScalingGroups;
+      this.onAWSChange.post("loaded");
+    });
+  }
   loadJobs() {
     loadXHR("sets.json", (json) => {
       Job.sets = json;
     });
 
-    // loadXHR("run_job.json", (json) => {
-    //   let job = Job.fromJSON(json);
-    //   this.jobs.currentJob = job;
-    //   job.loadLog(`runs/${job.id}/output.txt`);
-    //   job.status = JobStatus.Running;
-    //   this.jobs.addJob(job);
-    //   this.jobs.onChange.post("job-added");
-    // });
-    // loadXHR("run_job_queue.json", (json) => {
-    //   json.forEach(o => {
-    //     let job = Job.fromJSON(o);
-    //     this.jobs.addJob(job);
-    //   });
-    //   this.jobs.onChange.post("job-added");
-    // });
+    loadXHR("run_job.json", (json) => {
+      let job = Job.fromJSON(json);
+      job.status = JobStatus.Running;
+      this.runningJob = job;
+      this.runningJob.loadLog();
+      this.onRunningJobChange.post("job-added");
+      this.jobs.addJob(job);
+      this.jobs.onChange.post("job-added");
+    });
 
-    // loadXHR(baseUrl + "runs/av1_pvq_sync_check_2pass_3f_2016-09-06T19-09-29.335Z/objective-1-fast/total.out", (text) => {
-    //   console.info(text);
-    // }, "text");
+    loadXHR("run_job_queue.json", (json) => {
+      json.forEach(o => {
+        let job = Job.fromJSON(o);
+        job.status = JobStatus.Pending;
+        this.jobs.addJob(job);
+      });
+      this.jobs.onChange.post("job-added");
+    });
+
+    this.loadAWS();
 
     loadXHR("list.json", (json) => {
       json = json.filter(job => job.info.task === "objective-1-fast" && job.info.codec === "av1");
@@ -284,7 +324,7 @@ export class AppStore {
       });
       this.jobs.onChange.post("job-added");
 
-      AppDispatcher.dispatch(new SelectJob(this.jobs.jobs[0]));
+      // AppDispatcher.dispatch(new SelectJob(this.jobs.jobs[0]));
       // AppDispatcher.dispatch(new SelectJob(this.jobs.jobs[1]));
     });
   }

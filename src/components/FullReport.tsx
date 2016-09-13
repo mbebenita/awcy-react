@@ -2,7 +2,7 @@ import * as React from "react";
 import { Table, ListGroup, ListGroupItem } from "react-bootstrap";
 import { Jumbotron, Grid, Popover, OverlayTrigger, Navbar, Checkbox, Form, FormGroup, ControlLabel, FormControl, HelpBlock, Modal, Panel, Label, Col, Row, Button, ProgressBar, Badge, ButtonToolbar, DropdownButton, MenuItem } from "react-bootstrap";
 
-import { ScatterPlot, sortArray, ScatterPlotSeries, PlotAxis } from "./Plot";
+import { BDRatePlot, sortArray, ScatterPlotSeries, PlotAxis } from "./Plot";
 import { VideoReport } from "./Report";
 import { JobSelector } from "./Widgets";
 
@@ -61,8 +61,9 @@ export class FullReport extends React.Component<{
       sortArray(values, 0);
       series.push({
         name: job.selectedName,
+        label: job.id,
         values: values,
-        color: tinycolor(job.color).darken(50),
+        color: job.color,
         xAxis: this.state.fit ? undefined : {
           min: 0,
           max: 1
@@ -103,7 +104,7 @@ export class FullReport extends React.Component<{
       let plotHeight = 200;
       cols = metrics.map(metric =>
         <td key={metric} style={{ padding: 0 }}>
-          <ScatterPlot width={plotWidth} height={plotHeight} series={this.getSeries(video, metric)} />
+          <BDRatePlot width={plotWidth} height={plotHeight} series={this.getSeries(video, metric)} />
         </td>
       );
       rows = [<tr key={video}>{cols}</tr>];
@@ -116,7 +117,7 @@ export class FullReport extends React.Component<{
         rows.push(<tr key={metric + "-Header"}><td className="tableHeader">{metric}</td></tr>);
         rows.push(<tr key={metric}>
           <td style={{ padding: 0 }}>
-            <ScatterPlot width={plotWidth} height={plotHeight} series={this.getSeries(video, metric)} />
+            <BDRatePlot width={plotWidth} height={plotHeight} series={this.getSeries(video, metric)} />
           </td>
         </tr>);
       });

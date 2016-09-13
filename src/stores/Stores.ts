@@ -244,19 +244,16 @@ export class Jobs {
 }
 
 let colorPool = [
-  "#FEE",
-  "#EEF",
-  "#EFE",
-  "#EFF",
-  "#FE6"
+  '#a6cee3','#1f78b4','#b2df8a','#33a02c','#fb9a99','#e31a1c','#fdbf6f','#ff7f00','#cab2d6','#6a3d9a','#b15928'
+  // `#FF0000`, `#00FF00`, `#0000FF`, `#FF00FF`, `#0000FF`, `#800000`, `#008080`, `#000080`
 ];
 
-let nextColorIndex = 0;
-
-function nextColor(): string {
-  let r = colorPool[nextColorIndex];
-  nextColorIndex = (nextColorIndex + 1) % colorPool.length;
-  return r;
+function getColorForString(s: string): string {
+  let t = 0;
+  for (let i = 0; i < s.length; i++) {
+    t += s.charCodeAt(i);
+  }
+  return colorPool[t % colorPool.length];
 }
 
 let selectedNamePool = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
@@ -280,7 +277,7 @@ export class AppStore {
         let job = action.job;
         job.selected = true;
         job.selectedName = selectedNamePool.shift();
-        job.color = nextColor();
+        job.color = getColorForString(job.id);
         job.onChange.post("job-changed");
         this.selectedJobs.addJob(job);
       } else if (action instanceof DeselectJob) {

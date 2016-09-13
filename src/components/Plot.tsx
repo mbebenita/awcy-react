@@ -1013,7 +1013,7 @@ export interface PlotAxis {
   max?: number;
 }
 
-export class Plot<P extends PlotProps, S> extends React.Component<P, S> {
+export class Plot<P extends PlotProps, S extends PlotState> extends React.Component<P, S> {
   canvas: HTMLCanvasElement;
   ctx: CanvasRenderingContext2D;
   ratio: number = window.devicePixelRatio;
@@ -1226,6 +1226,7 @@ export class Plot<P extends PlotProps, S> extends React.Component<P, S> {
 
 export interface ScatterPlotSeries {
   name: string;
+  label: string;
   color: string;
   values: number[][];
   xAxis: PlotAxis;
@@ -1266,18 +1267,18 @@ export function sortArray(array: number[][], index: number) {
   });
 }
 
-export class ScatterPlot extends Plot<ScatterPlotProps, ScatterPlotState> {
+export class ScatterPlot<P extends ScatterPlotProps, S extends ScatterPlotState> extends Plot<P, S> {
   constructor(props: ScatterPlotProps) {
     super();
     this.state = { series: props.series };
   }
 
-  componentWillReceiveProps(nextProps: ScatterPlotProps, nextContext: any) {
+  componentWillReceiveProps(nextProps: P, nextContext: any) {
     super.componentWillReceiveProps(nextProps, nextContext);
     if (this.props.series != nextProps.series ||
       this.props.width != nextProps.width ||
       this.props.height != nextProps.height) {
-      this.setState({ series: nextProps.series }, () => {
+      this.setState({ series: nextProps.series } as any, () => {
         this.fitSeries();
         this.draw();
       })
@@ -1318,8 +1319,32 @@ export class ScatterPlot extends Plot<ScatterPlotProps, ScatterPlotState> {
     this.viewport.w += dx * 2;
     this.viewport.h += dy * 2;
   }
+  drawLegend() {
+    let c = this.ctx;
+    let r = this.ratio;
+    let series = this.state.series;
+
+    let p = 4 * r;
+    let w = 12 * r;
+    let h = 12 * r;
+
+    let offsetY = this.tickBarH * r + 2 * p;
+    let offsetX = this.device.w - p - w - 2 * p;
+    for (let j = 0; j < series.length; j++) {
+      let s = series[series.length - j - 1];
+      c.fillStyle = c.strokeStyle = s.color;
+      c.fillRect(offsetX, offsetY + j * (h + p), w, h);
+      c.fillStyle = "#000000";
+      let text = s.name + " " + s.label;
+      if (c.measureText(text).width > this.device.w) {
+        text = s.name;
+      }
+      this.drawDeviceText(new Point(offsetX - 2 * p, offsetY + j * (h + p)), text, 0, 0, "right", "bottom");
+    }
+  }
   draw() {
     super.draw();
+    this.drawLegend();
     let c = this.ctx;
     let series = this.state.series;
     let a = Point.createEmpty();
@@ -1339,11 +1364,26 @@ export class ScatterPlot extends Plot<ScatterPlotProps, ScatterPlotState> {
         }
       }
     }
-
     this.drawTickBars();
   }
+}
+
+export interface BDRatePlotProps extends ScatterPlotProps {
+}
+
+export interface BDRatePlotState extends ScatterPlotState {
+  series: ScatterPlotSeries[];
+}
+
+export class BDRatePlot extends ScatterPlot<BDRatePlotProps, BDRatePlotState> {
+  constructor(props: ScatterPlotProps) {
+    super(props);
+    this.state = { series: props.series };
+  }
+
   drawCrosshairs(dp: Point) {
-    super.drawCrosshairs(dp, true, false);
+    super.drawCrosshairs(dp);
+
     let p = this.getInverseTransform().transformPoint(dp.clone());
 
     let series = this.state.series;
@@ -1370,7 +1410,7 @@ export class ScatterPlot extends Plot<ScatterPlotProps, ScatterPlotState> {
           this.ctx.globalAlpha = 1;
         }
 
-        result = null; // segmentIntersection(h0, h1, b0, b1);
+        result = segmentIntersection(h0, h1, b0, b1);
         if (result && result.intersectsSegmentA && result.intersectsSegmentB) {
           hIntersections.push({series: s, p: result.intersection});
           this.ctx.globalAlpha = 0.2;
@@ -1385,8 +1425,8 @@ export class ScatterPlot extends Plot<ScatterPlotProps, ScatterPlotState> {
     vIntersections.forEach(o => this.drawDot(o.p, 1));
     hIntersections.forEach(o => this.drawDot(o.p, 1));
 
-    vIntersections.sort((a, b) => { return a.p.y - b.p.y; });
-    hIntersections.sort((a, b) => { return a.p.x - b.p.x; });
+    // vIntersections.sort((a, b) => { return a.p.y - b.p.y; });
+    // hIntersections.sort((a, b) => { return a.p.x - b.p.x; });
 
     function toString(intersections: {series: ScatterPlotSeries, p: Point} [], isX = true) {
       let a = [];
@@ -1422,6 +1462,5 @@ export class ScatterPlot extends Plot<ScatterPlotProps, ScatterPlotState> {
       dp.x = this.device.w;
       this.drawDeviceText(dp, s, -8, 8, "right", "bottom", 7);
     }
-
   }
 }

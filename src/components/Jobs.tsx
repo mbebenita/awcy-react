@@ -47,7 +47,7 @@ export class JobListItem extends React.Component<{
   }
   render() {
     let job = this.props.job;
-    let color = job.color ? tinycolor(job.color).desaturate().toString() : "";
+    // let color = job.color ? tinycolor(job.color).desaturate().toString() : "";
     let progress = null;
     let jobProgress = this.state.progress;
     if (job.status === JobStatus.Running) {
@@ -78,7 +78,7 @@ export class JobListItem extends React.Component<{
     } else {
       select = <Button onClick={this.onToggleSelectionClick.bind(this)}>{job.selected ? "Deselect " + job.selectedName : "Select"}</Button>
     }
-    return <div className="list-group-item" style={{ backgroundColor: color }}>
+    return <div className="list-group-item" style={{ borderRight: job.selected ? "4px solid " + job.color : undefined}}>
       <Modal show={this.state.showCancelModal} onHide={this.abortCancel.bind(this)}>
         <Modal.Header closeButton>
           <Modal.Title>Cancel job?</Modal.Title>

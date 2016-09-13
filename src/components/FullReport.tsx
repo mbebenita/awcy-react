@@ -5,6 +5,7 @@ import { Jumbotron, Grid, Popover, OverlayTrigger, Navbar, Checkbox, Form, FormG
 import { BDRatePlot, sortArray, ScatterPlotSeries, PlotAxis } from "./Plot";
 import { VideoReport } from "./Report";
 import { JobSelector } from "./Widgets";
+import { Promise } from "es6-promise";
 
 import { AppStore, Jobs, Job, JobStatus, loadXHR, ReportField, reportFieldNames, metricNames, metricNameToReportFieldIndex } from "../stores/Stores";
 declare var google: any;

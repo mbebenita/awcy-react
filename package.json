@@ -16,6 +16,7 @@
     "@types/react": "^0.14.33",
     "@types/react-bootstrap": "0.0.32",
     "@types/react-dom": "^0.14.16",
+    "@types/es6-promise": "0.0.31",
     "ts-loader": "^0.8.2",
     "typescript": "^2.1.0-dev.20160903",
     "webpack": "^1.13.2",
@@ -23,13 +24,13 @@
     "webpack-notifier": "^1.4.1"
   },
   "dependencies": {
-    "@types/es6-promise": "0.0.31",
     "es6-promise": "^3.2.1",
     "flux": "^2.1.1",
     "react": "^15.3.1",
     "react-bootstrap": "^0.30.3",
     "react-dom": "^15.3.1",
     "react-select": "^1.0.0-rc.1",
-    "source-map-loader": "^0.1.5"
+    "source-map-loader": "^0.1.5",
+    "ts-events": "^3.1.1"
   }
 }

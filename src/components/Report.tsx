@@ -112,6 +112,7 @@ export class VideoReport extends React.Component<VideoReportProps, {
     </div>
   }
   render() {
+    console.debug("Rendering Video Report");
     if (!this.props.name) {
       return this.renderSummaryReport();
     }

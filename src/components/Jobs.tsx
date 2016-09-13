@@ -1,9 +1,7 @@
 import * as React from "react";
-import { AppDispatcher, Action, SelectJob, DeselectJob, CancelJob, SubmitJob } from "../dispatchers/Dispatcher"
 import { ListGroup, ListGroupItem } from "react-bootstrap";
 import { Popover, OverlayTrigger, Navbar, Checkbox, Form, FormGroup, ControlLabel, FormControl, HelpBlock, Modal, Panel, Label, Col, Row, Button, ProgressBar, Badge, ButtonToolbar, DropdownButton, MenuItem } from "react-bootstrap";
-
-import { AppStore, Jobs, Job, JobStatus, JobProgress } from "../stores/Stores";
+import { AppDispatcher, Action, SelectJob, DeselectJob, CancelJob, SubmitJob , AppStore, Jobs, Job, JobStatus, JobProgress } from "../stores/Stores";
 import { Option } from "./Widgets"
 let Select = require('react-select');
 
@@ -78,7 +76,7 @@ export class JobListItem extends React.Component<{
         cancel = <Button bsStyle="danger" onClick={this.onCancelClick.bind(this)}>Cancel</Button>;
       }
     } else {
-      select = <Button onClick={this.onToggleSelectionClick.bind(this)}>{job.selected ? "Deselect" : "Select"}</Button>
+      select = <Button onClick={this.onToggleSelectionClick.bind(this)}>{job.selected ? "Deselect " + job.selectedName : "Select"}</Button>
     }
     return <div className="list-group-item" style={{ backgroundColor: color }}>
       <Modal show={this.state.showCancelModal} onHide={this.abortCancel.bind(this)}>
@@ -94,9 +92,10 @@ export class JobListItem extends React.Component<{
         </Modal.Footer>
       </Modal>
       {progress}
-      <div className="keyValuePair"><span className="key">ID</span>: <span className="value">{job.id}</span></div>
-      <div className="keyValuePair"><span className="key">Codec</span>: <span className="value">{job.codec}</span></div>
-      <div className="keyValuePair"><span className="key">Commit</span>: <span className="value">{job.commit}</span></div>
+      <div className="value">{job.id}</div>
+      <div>
+        <span className="tinyValue">{job.nick}, {job.codec}, {job.commit}</span>
+      </div>
       {details}
       <ButtonToolbar style={{ paddingTop: 8 }}>
         {cancel}
@@ -280,8 +279,8 @@ export class SubmitJobForm extends React.Component<{
 export class JobList extends React.Component<{
   store: Jobs;
   jobStatusFilter?: JobStatus;
-  onSelectChanged?: (job: Job) => void;
   detailed?: boolean;
+  listHeight: number
 }, {
     jobs: Job[];
     jobStatusFilter: JobStatus;
@@ -307,10 +306,6 @@ export class JobList extends React.Component<{
     if (this.props.jobStatusFilter !== undefined) {
       this.setState({ jobStatusFilter: this.props.jobStatusFilter } as any);
     }
-  }
-
-  onSelectChanged(job: Job) {
-    this.props.onSelectChanged(job);
   }
 
   onChangeCodec(codec: Option) {
@@ -393,8 +388,7 @@ export class JobList extends React.Component<{
       <div style={{ width: "100%", paddingTop: "10px", paddingBottom: "10px" }}>
         <Select multi placeholder="Config" value={this.state.configs} options={configOptions} onChange={this.onChangeConfigs.bind(this)} />
       </div>
-
-      <div style={{ height: "600px", overflow: "scroll" }}>
+      <div style={{bottom: 0, height: this.props.listHeight, overflow: "scroll", overflowX: "hidden"}}>
         <ListGroup componentClass="ul">
           {jobs.filter((job: Job) => {
             if (!(job.status & this.state.jobStatusFilter)) {
@@ -431,6 +425,7 @@ export class JobList extends React.Component<{
     AppDispatcher.dispatch(new SubmitJob(job));
   }
   render() {
+    console.debug("Rendering Job List");
     if (this.state.showSubmitJobForm) {
       return <SubmitJobForm onCreate={this.onSubmitJob.bind(this)} onCancel={this.hideSubmitJobForm.bind(this)} />
     } else {

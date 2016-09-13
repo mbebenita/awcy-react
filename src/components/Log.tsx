@@ -1,7 +1,6 @@
 import * as React from "react";
 import { ListGroup, ListGroupItem } from "react-bootstrap";
 import { Table, Popover, OverlayTrigger, Navbar, Checkbox, Form, FormGroup, ControlLabel, FormControl, HelpBlock, Modal, Panel, Label, Col, Row, Button, ProgressBar, Badge, ButtonToolbar, DropdownButton, MenuItem } from "react-bootstrap";
-
 import { Job, Jobs, AppStore } from "../stores/Stores";
 import { JobListItem } from "./Jobs";
 
@@ -53,6 +52,7 @@ export class AppStatus extends React.Component<{
     });
   }
   render() {
+    console.debug("Rendering Log");
     let table = null;
     let status = "";
     if (this.state.aws) {
@@ -101,7 +101,7 @@ export class AppStatus extends React.Component<{
       </Panel>
     }
 
-    return <div>
+    return <div style={{height: "3000px"}}>
       {info}
       {log}
       <Panel header={"AWS Status " + status}>

@@ -1023,7 +1023,7 @@ export class Plot<P extends PlotProps, S> extends React.Component<P, S> {
   viewport: Rectangle;
   logical: Rectangle;
 
-  textSize = 6;
+  textSize = 7;
   textPadding = 4;
 
   componentDidMount() {
@@ -1046,10 +1046,10 @@ export class Plot<P extends PlotProps, S> extends React.Component<P, S> {
     this.transform.inverse(i);
     return i;
   }
-  drawCrosshairs(dp: Point) {
+  drawCrosshairs(dp: Point, v = true, h = true) {
     this.ctx.strokeStyle = "#D0D0D0";
-    this.drawDeviceLine(new Point(0, dp.y), new Point(this.device.w, dp.y));
-    this.drawDeviceLine(new Point(dp.x, 0), new Point(dp.x, this.device.h));
+    h && this.drawDeviceLine(new Point(0, dp.y), new Point(this.device.w, dp.y));
+    v && this.drawDeviceLine(new Point(dp.x, 0), new Point(dp.x, this.device.h));
   }
   resetDeviceAndViewport(w: number, h: number) {
     this.device = new Rectangle(0, 0, w * this.ratio, h * this.ratio);
@@ -1105,14 +1105,18 @@ export class Plot<P extends PlotProps, S> extends React.Component<P, S> {
     c.lineTo(b.x, b.y);
     c.stroke();
   }
-  drawDot(a: Point) {
+  drawDot(a: Point, radius = 2) {
     let c = this.ctx;
     a = this.transform.transformPoint(a.clone());
     c.beginPath()
     c.beginPath();
-    c.arc(a.x, a.y, 2 * this.ratio, 0, 2 * Math.PI);
+    c.arc(a.x, a.y, radius * this.ratio, 0, 2 * Math.PI);
     c.stroke();
     c.fill();
+  }
+  drawText(a: Point, text: string, dx = 0, dy = 0, hAlign = "left", vAlign = "bottom", size = this.textSize) {
+    a = this.transform.transformPoint(a.clone());
+    this.drawDeviceText(a, text, dx, dy, hAlign, vAlign, size);
   }
   drawDeviceText(a: Point, text: string, dx = 0, dy = 0, hAlign = "left", vAlign = "bottom", size = this.textSize) {
     let c = this.ctx;
@@ -1162,7 +1166,7 @@ export class Plot<P extends PlotProps, S> extends React.Component<P, S> {
     // Horizontal Bar
     c.fillStyle = "#FFFFFF";
     c.fillRect(0, 0, this.device.w, this.tickBarH * this.ratio);
-    c.fillStyle = "#AAAAAA";
+    c.fillStyle = "#000000";
 
     // Horizontal Labels
     for (let x = r.x; x < r.x + r.w; x += dx) {
@@ -1175,7 +1179,7 @@ export class Plot<P extends PlotProps, S> extends React.Component<P, S> {
     // Vertical Bar
     c.fillStyle = "#FFFFFF";
     c.fillRect(0, 0, this.tickBarW * this.ratio, this.device.h);
-    c.fillStyle = "#AAAAAA";
+    c.fillStyle = "#000000";
 
     // Vertical Labels
     for (let y = r.y; y < r.y + r.h; y += dy) {
@@ -1212,10 +1216,10 @@ export class Plot<P extends PlotProps, S> extends React.Component<P, S> {
     }
   }
   render() {
+    console.debug("Rendering Plot");
     if (this.canvas && this.ctx) {
       this.draw();
     }
-    // return <canvas width={this.device.w} height={this.device.h} style={{ width: this.props.width, height: this.props.height }} ref={this.canvasDidMount.bind(this)} />
     return <canvas style={{ width: this.props.width, height: this.props.height }} ref={this.canvasDidMount.bind(this)} />
   }
 }
@@ -1339,53 +1343,85 @@ export class ScatterPlot extends Plot<ScatterPlotProps, ScatterPlotState> {
     this.drawTickBars();
   }
   drawCrosshairs(dp: Point) {
-    super.drawCrosshairs(dp);
+    super.drawCrosshairs(dp, true, false);
     let p = this.getInverseTransform().transformPoint(dp.clone());
 
-
     let series = this.state.series;
-    let intersections = [];
+    let vIntersections: {series: ScatterPlotSeries, p: Point} [] = [];
+    let hIntersections: {series: ScatterPlotSeries, p: Point} [] = [];
     for (let j = 0; j < series.length; j++) {
       let s = series[j];
       let v = s.values;
-      let a0 = new Point(p.x, 0);
-      let a1 = new Point(p.x, 100);
+      let v0 = new Point(p.x, 0);
+      let v1 = new Point(p.x, 100);
+
+      let h0 = new Point(0, p.y);
+      let h1 = new Point(100, p.y);
+
       for (let i = 1; i < v.length; i++) {
         let b0 = new Point(v[i - 1][0], v[i - 1][1]);
         let b1 = new Point(v[i][0], v[i][1]);
-        let result = segmentIntersection(a0, a1, b0, b1);
-        if (result.intersectsSegmentA && result.intersectsSegmentB) {
-          intersections.push(result.intersection);
+        let result = segmentIntersection(v0, v1, b0, b1);
+        if (result && result.intersectsSegmentA && result.intersectsSegmentB) {
+          vIntersections.push({series: s, p: result.intersection});
           this.ctx.globalAlpha = 0.2;
           this.ctx.strokeStyle = s.color;
-          this.drawLine(result.intersection, new Point(0, result.intersection.y));
+          this.drawLine(new Point(0, result.intersection.y), new Point(1000, result.intersection.y));
+          this.ctx.globalAlpha = 1;
+        }
+
+        result = null; // segmentIntersection(h0, h1, b0, b1);
+        if (result && result.intersectsSegmentA && result.intersectsSegmentB) {
+          hIntersections.push({series: s, p: result.intersection});
+          this.ctx.globalAlpha = 0.2;
+          this.ctx.strokeStyle = s.color;
+          this.drawLine(new Point(result.intersection.x, 0), new Point(result.intersection.x, 1000));
           this.ctx.globalAlpha = 1;
         }
       }
     }
     this.ctx.fillStyle = "#000000";
 
-    intersections.forEach(p => {
-      this.drawDot(p);
-    });
+    vIntersections.forEach(o => this.drawDot(o.p, 1));
+    hIntersections.forEach(o => this.drawDot(o.p, 1));
 
-    intersections.sort((a, b) => {
-      return a.y - b.y;
-    });
+    vIntersections.sort((a, b) => { return a.p.y - b.p.y; });
+    hIntersections.sort((a, b) => { return a.p.x - b.p.x; });
 
-    let values = []
-    for (let i = 0; i < intersections.length; i++) {
-      values.push(intersections[i].y.toFixed(2));
+    function toString(intersections: {series: ScatterPlotSeries, p: Point} [], isX = true) {
+      let a = [];
+      let b = [];
+      for (let i = 0; i < intersections.length; i++) {
+        let n = intersections[i].series.name;
+        let p = intersections[i].p;
+        let v = (isX ? p.x : p.y);
+        a.push(n + " = " + v.toFixed(2));
+        if (i > 0) {
+          let lastN = intersections[i - 1].series.name;
+          let lastP = intersections[i - 1].p;
+          let lastV = (isX ? lastP.x : lastP.y);
+          let d = v - lastV;
+          a.push(n + " - " + lastN + " = " + d.toFixed(2) + " (" + ((d / lastV) * 100).toFixed(2) + "%)");
+        }
+      }
+      return a.join(", ");
     }
 
-    let deltas = []
-    for (let i = 1; i < intersections.length; i++) {
-      deltas.push((intersections[i].y - intersections[i - 1].y).toFixed(2));
+    if (hIntersections.length) {
+      let last = hIntersections[hIntersections.length - 1].p;
+      let s = toString(hIntersections, true);
+      let dp = this.transform.transformPoint(last.clone());
+      dp.y = this.device.h;
+      this.drawDeviceText(dp, s, 8, -8, "left", "top", 7);
     }
-    let s = values.join(", ");
-    if (deltas.length) {
-      s += " : " + deltas.join(", ");
+
+    if (vIntersections.length) {
+      let last = vIntersections[vIntersections.length - 1].p;
+      let s = toString(vIntersections, false);
+      let dp = this.transform.transformPoint(last.clone());
+      dp.x = this.device.w;
+      this.drawDeviceText(dp, s, -8, 8, "right", "bottom", 7);
     }
-    this.drawDeviceText(dp, s, 8, 8, "left", "bottom", 8);
+
   }
 }

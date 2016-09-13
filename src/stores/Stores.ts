@@ -1,12 +1,29 @@
-import { AppDispatcher, Action, SelectJob, DeselectJob, CancelJob } from "../dispatchers/Dispatcher"
+import { Dispatcher } from "flux";
+
+export var AppDispatcher = new Dispatcher<Action>();
+export class Action { }
+export class SelectJob extends Action {
+  constructor(public job: Job) {
+    super();
+  }
+}
+export class DeselectJob extends Action {
+  constructor(public job: Job) { super(); }
+}
+export class CancelJob extends Action {
+  constructor(public job: Job) { super(); }
+}
+export class SubmitJob extends Action {
+  constructor(public job: Job) { super(); }
+}
+
 import { Promise } from "es6-promise"
 import { AsyncEvent } from 'ts-events';
 
 let baseUrl = "https://arewecompressedyet.com/";
 let betaBaseUrl = "https://beta.arewecompressedyet.com/";
 
-
-function zip(a: string [], b: any []) {
+function zip(a: string[], b: any[]) {
   let o = {};
   for (let i = 0; i < a.length; i++) {
     o[a[i]] = b[i];
@@ -54,7 +71,7 @@ export enum ReportField {
   Time
 }
 
-export type Report = {[name: string]: number [][]};
+export type Report = { [name: string]: number[][] };
 
 export let metricNames = [
   "PSNR Y", "PSNR HVS", "SSIM", "FAST SSIM", "CIEDE 2000",
@@ -93,6 +110,7 @@ export class Job {
   log: string = "";
   progress: JobProgress = new JobProgress(0, 0);
   selected: boolean = false;
+  selectedName: string = "";
   color: string = "";
   onChange = new AsyncEvent<string>();
   constructor() {
@@ -126,13 +144,13 @@ export class Job {
     });
   }
 
-  loadFiles(paths: string []): Promise<string []> {
+  loadFiles(paths: string[]): Promise<string[]> {
     return Promise.all(paths.map(path => this.loadFile(path)));
   }
 
 
   report: Report = null
-  loadReport(): Promise<{[name: string]: any}> {
+  loadReport(): Promise<{ [name: string]: any }> {
     if (this.report) {
       return Promise.resolve(this.report);
     }
@@ -169,25 +187,25 @@ export class Job {
   }
 
   static codecs = {
-    "daala":    "Daala",
-    "x264":     "x264",
-    "x265":     "x265",
-    "x265-rt":  "x265 Realtime",
-    "vp8":      "VP8",
-    "vp9":      "VP9",
-    "vp10":     "VP10",
-    "vp10-rt":  "VP10 Realtime",
-    "av1":      "AV1 (High Latency CQP)",
-    "av1-rt":   "AV1 (Low Latency CQP)",
-    "thor":     "Thor",
-    "thor-rt":  "Thor Realtime"
+    "daala": "Daala",
+    "x264": "x264",
+    "x265": "x265",
+    "x265-rt": "x265 Realtime",
+    "vp8": "VP8",
+    "vp9": "VP9",
+    "vp10": "VP10",
+    "vp10-rt": "VP10 Realtime",
+    "av1": "AV1 (High Latency CQP)",
+    "av1-rt": "AV1 (Low Latency CQP)",
+    "thor": "Thor",
+    "thor-rt": "Thor Realtime"
   };
 
-  static sets = { };
+  static sets = {};
 }
 
 export class Jobs {
-  jobs: Job [] = [];
+  jobs: Job[] = [];
   onChange = new AsyncEvent<string>();
   constructor() {
   }
@@ -241,6 +259,7 @@ function nextColor(): string {
   return r;
 }
 
+let selectedNamePool = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
 export class AppStore {
   jobs: Jobs;
   selectedJobs: Jobs;
@@ -260,12 +279,15 @@ export class AppStore {
       if (action instanceof SelectJob) {
         let job = action.job;
         job.selected = true;
+        job.selectedName = selectedNamePool.shift();
         job.color = nextColor();
         job.onChange.post("job-changed");
         this.selectedJobs.addJob(job);
       } else if (action instanceof DeselectJob) {
         let job = action.job;
+        selectedNamePool.unshift(job.selectedName);
         job.selected = false;
+        job.selectedName = "";
         job.color = "";
         job.onChange.post("job-changed");
         this.selectedJobs.removeJob(job);

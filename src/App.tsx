@@ -1,6 +1,4 @@
 import * as React from "react";
-import { AppDispatcher, Action } from "./dispatchers/Dispatcher"
-import * as Actions from "./dispatchers/Dispatcher"
 import { Button } from "react-bootstrap";
 import { ProgressBar } from "react-bootstrap";
 import { ListGroup, ListGroupItem } from "react-bootstrap";
@@ -9,15 +7,24 @@ import { Col, Row } from "react-bootstrap";
 import { Panel } from "react-bootstrap";
 import { Tabs, Tab } from "react-bootstrap";
 
-import { Charts } from "./components/Charts"
-import { Runs } from "./components/Runs"
+import { FullReport } from "./components/FullReport"
 import { JobList } from "./components/Jobs"
 import { Log, AppStatus } from "./components/Log"
 
-import { AppStore, Job, JobStatus } from "./stores/Stores"
+import { AppStore, Job, JobStatus, SelectJob, AppDispatcher } from "./stores/Stores"
 
 export interface AppProps { }
 export interface AppState { }
+
+export class Lots extends React.Component<void, void> {
+  render() {
+    let a = [];
+    for (let i = 0; i < 1000; i++) {
+      a.push(<p key={i}>{i}</p>)
+    }
+    return <div>{a}</div>;
+  }
+}
 
 export class App extends React.Component<AppProps, AppState> {
   store: AppStore;
@@ -36,41 +43,39 @@ export class App extends React.Component<AppProps, AppState> {
 
   onJobSelected(job: Job) {
     debugger;
-    AppDispatcher.dispatch(new Actions.SelectJob(job));
+    AppDispatcher.dispatch(new SelectJob(job));
   }
 
   render() {
-    return <div style={{display: "table", tableLayout: "fixed", paddingTop: 10, paddingLeft: 5, width: "100%"}}>
-      <div style={{display: "table-row"}}>
-        <div style={{width: "400px", display: "table-cell"}}>
-          <Tabs defaultActiveKey={1} animation={false} id="noanim-tab-example">
-            <Tab eventKey={1} key="runs" title="Runs">
-              <div style={{padding: 10}}>
-                <JobList jobStatusFilter={JobStatus.Completed} store={this.store.jobs} onSelectChanged={this.onJobSelected.bind(this)}/>
-              </div>
-            </Tab>
-            <Tab eventKey={2} key="jobs" title="Running / Pending Jobs">
-              <div style={{padding: 10}}>
-                <JobList detailed jobStatusFilter={JobStatus.Running | JobStatus.Pending} store={this.store.jobs} onSelectChanged={this.onJobSelected.bind(this)}/>
-              </div>
-            </Tab>
-          </Tabs>
-        </div>
-        <div style={{display: "table-cell"}}>
-          <Tabs defaultActiveKey={3} animation={false} id="noanim-tab-example">
-            <Tab eventKey={3} key="graphs" title="Graphs">
-              <div style={{padding: 10}}>
-                <Charts jobs={this.store.selectedJobs}/>
-              </div>
-            </Tab>
-            <Tab eventKey={4} key="status" title="Status">
-              <div style={{padding: 10}}>
-                <AppStatus store={this.store}/>
-              </div>
-            </Tab>
-          </Tabs>
-        </div>
-      </div>
-    </div>;
+    console.debug("Rendering App");
+    return <div><div className="sidebar">
+      <Tabs defaultActiveKey={1} animation={false} id="noanim-tab-example">
+        <Tab eventKey={1} key="runs" title="Runs">
+          <div style={{padding: 10}}>
+            <JobList jobStatusFilter={JobStatus.Completed} store={this.store.jobs} listHeight={window.innerHeight - 200}/>
+          </div>
+        </Tab>
+        <Tab eventKey={2} key="jobs" title="Running / Pending Jobs">
+          <div style={{padding: 10}}>
+            <JobList detailed jobStatusFilter={JobStatus.Running | JobStatus.Pending} store={this.store.jobs} listHeight={window.innerHeight - 200}/>
+          </div>
+        </Tab>
+      </Tabs>
+    </div>
+    <div className="content">
+      <Tabs defaultActiveKey={3} animation={false} id="noanim-tab-example">
+        <Tab eventKey={3} key="graphs" title="Report">
+          <div style={{padding: 10, height: window.innerHeight, overflow: "scroll"}}>
+            <FullReport jobs={this.store.selectedJobs}/>
+          </div>
+        </Tab>
+        <Tab eventKey={4} key="status" title="Status">
+          <div style={{padding: 10, height: window.innerHeight, overflow: "scroll"}}>
+            <AppStatus store={this.store}/>
+          </div>
+        </Tab>
+      </Tabs>
+    </div>
+    </div>
   }
 }

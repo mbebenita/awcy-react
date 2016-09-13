@@ -19,7 +19,6 @@
           body {
             font-family: 'Roboto', sans-serif;
           }
-
           button.list-group-item:focus {
             outline: none;
             z-index: 1;
@@ -33,9 +32,15 @@
             font-family: 'Roboto Mono', monospace;
           }
           .value {
-            font-size: 12px;
+            font-size: 11px;
             font-family: 'Roboto Mono', monospace;
-            color: darkgray;
+            color: black;
+            word-wrap: break-word;
+          }
+          .tinyValue {
+            font-size: 9px;
+            font-family: 'Roboto Mono', monospace;
+            color: black;
             word-wrap: break-word;
           }
           .tableTitle {
@@ -101,6 +106,20 @@
             border-top: none !important;
             border-bottom: none !important;
           }
+          .sidebar {
+            position: fixed;
+            padding: 10;
+            width: 400px;
+            top: 40px;
+            left: 0;
+          }
+          .content {
+            position: fixed;
+            left: 400px;
+            right: 0;
+            height: 1200px;
+            top: 40px;
+          }
         </style>
         <div id="xiphbar">
           <div>
@@ -119,7 +138,6 @@
           </div>
         </div>
         <div id="app"></div>
-
         <!-- Dependencies -->
         <script src="./tinycolor.js"></script>
         <script src="./dist/react.js"></script>
@@ -127,12 +145,5 @@
 
         <!-- Main -->
         <script src="./dist/bundle.js"></script>
-
-        <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
-        <script type="text/javascript">
-          // Load the Visualization API and the corechart package.
-          google.charts.load('current', {'packages': ['corechart']});
-        </script>
-
     </body>
 </html>

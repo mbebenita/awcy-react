@@ -10,7 +10,7 @@ interface JobSelectorProps {
   onChange?: (jobs: Job [], metrics?: string [], videos?: string [], qualities?: number[]) => void;
 }
 
-interface Option {
+export interface Option {
   label: string;
   value: string;
   disabled?: boolean;
@@ -106,6 +106,7 @@ export class JobSelector extends React.Component<JobSelectorProps, {
     return job && job.id === id;
   }
   render() {
+    console.debug("Rendering JobSelector");
     let allJobs = [];
     let allVideos = [];
     let metrics = metricNames.map(name => {

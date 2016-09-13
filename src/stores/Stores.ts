@@ -20,8 +20,8 @@ export class SubmitJob extends Action {
 import { Promise } from "es6-promise"
 import { AsyncEvent } from 'ts-events';
 
-let baseUrl = "https://arewecompressedyet.com/";
-let betaBaseUrl = "https://beta.arewecompressedyet.com/";
+// let baseUrl = "https://arewecompressedyet.com/";
+let baseUrl = "https://beta.arewecompressedyet.com/";
 
 function zip(a: string[], b: any[]) {
   let o = {};
@@ -302,11 +302,11 @@ export class AppStore {
     this.loadJobs();
   }
   loadAWS() {
-    loadXHR(betaBaseUrl + "describeAutoScalingInstances", (json) => {
+    loadXHR(baseUrl + "describeAutoScalingInstances", (json) => {
       this.aws.AutoScalingInstances = json.AutoScalingInstances;
       this.onAWSChange.post("loaded");
     });
-    loadXHR(betaBaseUrl + "describeAutoScalingGroups", (json) => {
+    loadXHR(baseUrl + "describeAutoScalingGroups", (json) => {
       this.aws.AutoScalingGroups = json.AutoScalingGroups;
       this.onAWSChange.post("loaded");
     });
@@ -322,11 +322,12 @@ export class AppStore {
     // format=json
   }
   loadJobs() {
-    loadXHR("sets.json", (json) => {
+    loadXHR(baseUrl + "sets.json", (json) => {
       Job.sets = json;
     });
 
-    loadXHR("run_job.json", (json) => {
+    loadXHR(baseUrl + "run_job.json", (json) => {
+      if (!json) return;
       let job = Job.fromJSON(json);
       job.status = JobStatus.Running;
       this.runningJob = job;
@@ -336,7 +337,8 @@ export class AppStore {
       this.jobs.onChange.post("job-added");
     });
 
-    loadXHR("run_job_queue.json", (json) => {
+    loadXHR(baseUrl + "run_job_queue.json", (json) => {
+      if (!json) return;
       json.forEach(o => {
         let job = Job.fromJSON(o);
         job.status = JobStatus.Pending;
@@ -347,7 +349,7 @@ export class AppStore {
 
     this.loadAWS();
 
-    loadXHR("list.json", (json) => {
+    loadXHR(baseUrl + "list.json", (json) => {
       json = json.filter(job => job.info.task === "objective-1-fast" && job.info.codec === "av1");
       json.sort(function (a, b) {
         return (new Date(b.date) as any) - (new Date(a.date) as any);

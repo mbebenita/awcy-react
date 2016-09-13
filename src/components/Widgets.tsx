@@ -2,6 +2,7 @@ import * as React from "react";
 import { } from "react-bootstrap";
 import { } from "react-bootstrap";
 import { Jobs, Job, metricNames } from "../stores/Stores";
+declare var require: any;
 let Select = require('react-select');
 
 interface JobSelectorProps {
@@ -106,7 +107,7 @@ export class JobSelector extends React.Component<JobSelectorProps, {
     return job && job.id === id;
   }
   render() {
-    console.debug("Rendering JobSelector");
+    console.debug("Rendering Job Selector");
     let allJobs = [];
     let allVideos = [];
     let metrics = metricNames.map(name => {

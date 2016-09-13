@@ -1,4 +1,5 @@
 var WebpackNotifierPlugin = require('webpack-notifier');
+var webpack = require('webpack');
 
 module.exports = {
   entry: "./src/index.tsx",
@@ -7,7 +8,8 @@ module.exports = {
   },
 
   // Enable sourcemaps for debugging webpack's output.
-  devtool: "source-map",
+  // devtool: "source-map",
+  devtool: "cheap-module-source-map",
 
   resolve: {
       // Add '.ts' and '.tsx' as resolvable extensions.
@@ -28,6 +30,16 @@ module.exports = {
   plugins: [
     // Set up the notifier plugin - you can remove this (or set alwaysNotify false) if desired
     // new WebpackNotifierPlugin({ alwaysNotify: true }),
+    // new webpack.DefinePlugin({
+    //     'process.env': {
+    //     'NODE_ENV': JSON.stringify('production')
+    //     }
+    // }),
+    // new webpack.optimize.UglifyJsPlugin({
+    //   compress:{
+    //     warnings: true
+    //   }
+    // })
   ],
   // When importing a module whose path matches one of the following, just
   // assume a corresponding global variable exists and use that instead.

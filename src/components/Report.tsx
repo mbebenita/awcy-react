@@ -3,6 +3,8 @@ import { Table } from "react-bootstrap";
 import { Col, Row, Button } from "react-bootstrap";
 import { Report, AppStore, Jobs, Job, JobStatus, loadXHR, ReportField, reportFieldNames, metricNames, metricNameToReportFieldIndex} from "../stores/Stores";
 
+declare var require: any;
+
 let Select = require('react-select');
 
 function formatNumber(n) {

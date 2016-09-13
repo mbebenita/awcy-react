@@ -1270,7 +1270,7 @@ export function sortArray(array: number[][], index: number) {
 export class ScatterPlot<P extends ScatterPlotProps, S extends ScatterPlotState> extends Plot<P, S> {
   constructor(props: ScatterPlotProps) {
     super();
-    this.state = { series: props.series };
+    this.state = { series: props.series } as any;
   }
 
   componentWillReceiveProps(nextProps: P, nextContext: any) {

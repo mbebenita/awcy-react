@@ -3,6 +3,7 @@ import { ListGroup, ListGroupItem } from "react-bootstrap";
 import { Popover, OverlayTrigger, Navbar, Checkbox, Form, FormGroup, ControlLabel, FormControl, HelpBlock, Modal, Panel, Label, Col, Row, Button, ProgressBar, Badge, ButtonToolbar, DropdownButton, MenuItem } from "react-bootstrap";
 import { AppDispatcher, Action, SelectJob, DeselectJob, CancelJob, SubmitJob , AppStore, Jobs, Job, JobStatus, JobProgress } from "../stores/Stores";
 import { Option } from "./Widgets"
+declare var require: any;
 let Select = require('react-select');
 
 declare var tinycolor: any;
@@ -296,7 +297,7 @@ export class JobList extends React.Component<{
       jobs: [],
       jobStatusFilter: JobStatus.All,
       showSubmitJobForm: false,
-    };
+    } as any;
   }
 
   componentDidMount() {

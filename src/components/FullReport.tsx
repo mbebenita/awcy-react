@@ -9,6 +9,7 @@ import { JobSelector } from "./Widgets";
 import { AppStore, Jobs, Job, JobStatus, loadXHR, ReportField, reportFieldNames, metricNames, metricNameToReportFieldIndex } from "../stores/Stores";
 declare var google: any;
 declare var tinycolor: any;
+declare var require: any;
 let Select = require('react-select');
 
 export class FullReport extends React.Component<{

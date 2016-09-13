@@ -311,6 +311,16 @@ export class AppStore {
       this.onAWSChange.post("loaded");
     });
   }
+  loadBDRateReport(a: Job, b: Job) {
+    // betaBaseUrl + "bd_rate" + `?a=${a.id}&b=${}`
+    // https://beta.arewecompressedyet.com/bd_rate?
+    // a=int-init-qm-2016-09-09T14-25-37.630Z&
+    // b=daala-master-2016-09-09T15-34-15.715Z&
+    // method=report-overlap&
+    // set=objective-1-fast&
+    // file=objective-1-fast/total.out&
+    // format=json
+  }
   loadJobs() {
     loadXHR("sets.json", (json) => {
       Job.sets = json;

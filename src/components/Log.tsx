@@ -36,7 +36,7 @@ export class AppStatus extends React.Component<{
     super();
     this.state = {
       runningJob: null
-    };
+    } as any;
   }
   componentDidMount() {
     let store = this.props.store;

@@ -9,6 +9,7 @@ To run a local copy, you will need to install node.js and webpack on your comput
 
 ```
 npm install
+```
 
 To build AWCY whenever a file changes run:
 
@@ -16,7 +17,7 @@ To build AWCY whenever a file changes run:
 npm run build-watch
 ```
 
-To sstart a dev web server run:
+To start a dev web server run:
 
 ```
 webpack-dev-server

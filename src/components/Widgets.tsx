@@ -1,5 +1,5 @@
 import * as React from "react";
-import { } from "react-bootstrap";
+import { Button } from "react-bootstrap";
 import { } from "react-bootstrap";
 import { Jobs, Job, metricNames } from "../stores/Stores";
 declare var require: any;
@@ -155,6 +155,67 @@ export class JobSelector extends React.Component<JobSelectorProps, {
               <Select multi value={this.state.qualities} options={qualities} onChange={this.onChangeQualities.bind(this)}/>
             </div>
           </div>
+        </div>
+      </div>
+    </div>
+  }
+}
+
+interface AnalyzerProps {
+  video: string;
+  jobs: Job []
+}
+export class Analyzer extends React.Component<AnalyzerProps, {
+  jobs: Job [];
+  options: { value: string, label: string } [];
+  selected: { value: string, label: string } [];
+}> {
+  constructor(props) {
+    super();
+    this.state = {
+      jobs: [],
+      options: [],
+      selected: []
+    } as any;
+  }
+  componentWillReceiveProps(nextProps: AnalyzerProps, nextContext: any) {
+    if (!arraysEqual(this.state.jobs, nextProps.jobs)) {
+      this.loadOptions(nextProps.jobs);
+    }
+  }
+  loadOptions(jobs: Job []) {
+    let video = this.props.video;
+    let options = [];
+    jobs.forEach((job) => {
+      job.loadReport().then((report) => {
+        if (!report) return;
+        let options = this.state.options;
+        report[video].forEach((row) => {
+          options.push({ value: job.id + " " + row[0], label: job.id + " @ " + row[0] });
+        })
+        this.setState({options} as any);
+      });
+    });
+  }
+  componentWillMount() {
+    this.loadOptions(this.props.jobs);
+  }
+  onChange(selected) {
+    this.setState({selected} as any);
+  }
+  onAnalyzeClick() {
+
+  }
+  render() {
+    let options = this.state.options;
+    let selected = this.state.selected;
+    return <div style={{ paddingBottom: 8, paddingTop: 4 }}>
+      <div className="row">
+        <div className="col-xs-6" style={{ paddingBottom: 8 }}>
+          <Select multi placeholder="Analyzer Files" value={selected} options={options} onChange={this.onChange.bind(this)} />
+        </div>
+        <div className="col-xs-6" style={{ paddingBottom: 8 }}>
+          <Button disabled={selected.length == 0} onClick={this.onAnalyzeClick.bind(this)}>Analyze Files</Button>
         </div>
       </div>
     </div>

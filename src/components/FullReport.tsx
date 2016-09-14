@@ -1,11 +1,12 @@
 import * as React from "react";
-import { Table, ListGroup, ListGroupItem } from "react-bootstrap";
+import { Tabs, Tab, Table, ListGroup, ListGroupItem } from "react-bootstrap";
 import { Jumbotron, Grid, Popover, OverlayTrigger, Navbar, Checkbox, Form, FormGroup, ControlLabel, FormControl, HelpBlock, Modal, Panel, Label, Col, Row, Button, ProgressBar, Badge, ButtonToolbar, DropdownButton, MenuItem } from "react-bootstrap";
 
 import { BDRatePlot, sortArray, ScatterPlotSeries, PlotAxis } from "./Plot";
 import { VideoReport, BDRateReportComponent } from "./Report";
 import { JobSelector } from "./Widgets";
 import { Promise } from "es6-promise";
+import { Analyzer } from "./Widgets";
 
 import { AppStore, Jobs, Job, JobStatus, loadXHR, ReportField, reportFieldNames, metricNames, metricNameToReportFieldIndex } from "../stores/Stores";
 declare var google: any;
@@ -21,7 +22,8 @@ export class FullReport extends React.Component<{
     qualities: number[],
     fit: boolean;
     stack: boolean;
-    jobsToCompare: Job[]
+    jobsToCompare: Job[];
+    analyzerFiles: { [index: string]: { value: string, label: string } [] }
   }> {
   constructor() {
     super();
@@ -87,11 +89,8 @@ export class FullReport extends React.Component<{
   }
   renderVideoReport(video: string, stack: boolean) {
     let jobs = this.props.jobs.jobs;
-    let job = jobs[0];
     let metrics = this.state.metrics;
     let qualities = this.state.qualities;
-    let jobsToCompare = this.state.jobsToCompare;
-    let videoReport = job.report[video];
     let headers = metrics.map(name =>
       <th key={name} className="tableHeader">{name}</th>
     );
@@ -119,6 +118,14 @@ export class FullReport extends React.Component<{
         </tr>);
       });
     }
+    let tabs = jobs.map((job, i) => {
+      return <Tab eventKey={i} key={job.id} title={job.id}>
+        <div style={{padding: 10}}>
+          <VideoReport name={video} job={job} highlightColumns={metrics} filterQualities={qualities} />
+        </div>
+      </Tab>
+    });
+
     return <div key={video}>
       <Panel header={video}>
         <Table condensed bordered={false}>
@@ -131,6 +138,12 @@ export class FullReport extends React.Component<{
             {rows}
           </tbody>
         </Table>
+        <Tabs animation={false} id="noanim-tab-example">
+          {tabs}
+        </Tabs>
+        <div style={{ paddingBottom: 8, paddingTop: 4 }}>
+          <Analyzer video={video} jobs={jobs}/>
+        </div>
       </Panel>
     </div>
 
@@ -151,10 +164,6 @@ export class FullReport extends React.Component<{
     let metrics = this.state.metrics;
     let qualities = this.state.qualities;
     let jobsToCompare = this.state.jobsToCompare;
-    let totalVideoReport = null;
-    if (!this.state.videos.length) {
-      totalVideoReport = this.renderVideoReport("Total", true);
-    }
     for (let video in job.report) {
       if (this.state.videos.length && this.state.videos.indexOf(video) < 0) {
         continue;
@@ -170,10 +179,9 @@ export class FullReport extends React.Component<{
         <JobSelector metrics={this.state.metrics} jobs={this.props.jobs.jobs} onChange={this.onJobSelectorChange.bind(this)} />
       </div>
       <div style={{ paddingBottom: 8, paddingTop: 4 }}>
-            <Button active={this.state.fit} onClick={this.onFitClick.bind(this)}>Scale Charts</Button>{' '}
-            <Button active={this.state.stack} onClick={this.onStackClick.bind(this)}>Enlarge Charts</Button>
-        </div>
-      {totalVideoReport}
+        <Button active={this.state.fit} onClick={this.onFitClick.bind(this)}>Scale Charts</Button>{' '}
+        <Button active={this.state.stack} onClick={this.onStackClick.bind(this)}>Enlarge Charts</Button>
+      </div>
       <div style={{ paddingTop: 8 }}>
         {report}
         {tables}

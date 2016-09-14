@@ -1,7 +1,11 @@
 import * as React from "react";
-import { Button } from "react-bootstrap";
+import { Button, Panel } from "react-bootstrap";
 import { } from "react-bootstrap";
 import { Jobs, Job, metricNames } from "../stores/Stores";
+import { Analyzer, Accounting, AccountingSymbol } from "../analyzer";
+
+import { BarPlot, BarPlotTable, Data } from "./Plot";
+
 declare var require: any;
 let Select = require('react-select');
 
@@ -165,7 +169,8 @@ interface AnalyzerProps {
   video: string;
   jobs: Job []
 }
-export class Analyzer extends React.Component<AnalyzerProps, {
+
+export class AnalyzerSelector extends React.Component<AnalyzerProps, {
   jobs: Job [];
   options: { value: string, label: string } [];
   selected: { value: string, label: string } [];
@@ -209,6 +214,10 @@ export class Analyzer extends React.Component<AnalyzerProps, {
   render() {
     let options = this.state.options;
     let selected = this.state.selected;
+    let analyzer = null;
+    if (selected.length) {
+      analyzer = <AnalyzerComponent decoderPath="http://aomanalyzer.org/bin/decoder.js" videoPath="crosswalk_30.ivf"/>
+    }
     return <div style={{ paddingBottom: 8, paddingTop: 4 }}>
       <div className="row">
         <div className="col-xs-6" style={{ paddingBottom: 8 }}>
@@ -218,6 +227,93 @@ export class Analyzer extends React.Component<AnalyzerProps, {
           <Button disabled={selected.length == 0} onClick={this.onAnalyzeClick.bind(this)}>Analyze Files</Button>
         </div>
       </div>
+      <div>
+        {analyzer}
+      </div>
     </div>
+  }
+}
+
+export class AnalyzerComponent extends React.Component<{
+  decoderPath: string;
+  videoPath: string;
+}, {
+  analyzer: Analyzer;
+  interval: number;
+}> {
+  constructor() {
+    super();
+    this.state = { analyzer: null, interval: 0 };
+  }
+  componentWillMount() {
+    this.load(this.props.decoderPath, this.props.videoPath);
+  }
+  load(decoderPath: string, videoPath: string) {
+    Analyzer.loadDecoder(decoderPath).then((analyzer) => {
+      console.info(analyzer);
+      Analyzer.downloadFile(videoPath).then((bytes) => {
+        analyzer.openFileBytes(bytes);
+        this.setState({analyzer} as any);
+      });
+    });
+  }
+  onClick() {
+    let analyzer = this.state.analyzer;
+    if (this.state.interval) {
+      clearInterval(this.state.interval);
+      this.setState({interval: 0} as any);
+      return;
+    }
+    let interval = setInterval(() =>{
+      analyzer.readFrame().then((frame) => {
+        if (!frame) {
+          clearInterval(this.state.interval);
+          this.setState({interval: 0} as any);
+          return;
+        }
+        this.forceUpdate();
+      });
+    }, 16);
+    this.setState({interval} as any);
+  }
+  getData(): Data.Table {
+    let table = new Data.Table();
+    let analyzer = this.state.analyzer;
+    if (!analyzer) {
+      return table;
+    }
+    table.addColumn("string", "Frame");
+    let names = Accounting.getSortedSymbolNames(analyzer.frames.map(frame => frame.accounting));
+    names.forEach(name => {
+      table.addColumn("number", name)
+    });
+
+    let rows = [];
+    analyzer.frames.forEach((frame, i) => {
+      let row = [i];
+      let symbols = frame.accounting.createFrameSymbols();
+      names.forEach(name => {
+        let symbol = symbols[name];
+        row.push(symbol ? symbol.bits : 0);
+      });
+      rows.push(row);
+    });
+    table.addRows(rows);
+    return table;
+  }
+  render() {
+    console.debug("Rendering Analyzer");
+    let analyzer = this.state.analyzer;
+    if (!analyzer) {
+      return <Panel header="Analyzer">
+        <span className="glyphicon glyphicon-refresh glyphicon-refresh-animate"></span> Loading analyzer ...
+      </Panel>
+    }
+    return <Panel header="Analyzer">
+      <BarPlot width={800} height={200} table={this.getData()} isStacked="relative"/>
+      <div style={{ paddingBottom: 8, paddingTop: 4 }}>
+        <Button onClick={this.onClick.bind(this)}>Play / Pause Video</Button>
+      </div>
+    </Panel>
   }
 }

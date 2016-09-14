@@ -13,6 +13,8 @@ import { Log, AppStatus } from "./components/Log"
 
 import { AppStore, Job, JobStatus, SelectJob, AppDispatcher } from "./stores/Stores"
 
+import { AnalyzerComponent } from "./components/Widgets"
+
 export interface AppProps { }
 export interface AppState { }
 
@@ -46,36 +48,38 @@ export class App extends React.Component<AppProps, AppState> {
     AppDispatcher.dispatch(new SelectJob(job));
   }
 
+
   render() {
     console.debug("Rendering App");
-    return <div><div className="sidebar">
-      <Tabs defaultActiveKey={1} animation={false} id="noanim-tab-example">
-        <Tab eventKey={1} key="runs" title="Runs">
-          <div style={{padding: 10}}>
-            <JobList jobStatusFilter={JobStatus.Completed} store={this.store.jobs} listHeight={window.innerHeight - 200}/>
-          </div>
-        </Tab>
-        <Tab eventKey={2} key="jobs" title="Running / Pending Jobs">
-          <div style={{padding: 10}}>
-            <JobList detailed jobStatusFilter={JobStatus.Running | JobStatus.Pending} store={this.store.jobs} listHeight={window.innerHeight - 200}/>
-          </div>
-        </Tab>
-      </Tabs>
-    </div>
-    <div className="content">
-      <Tabs defaultActiveKey={3} animation={false} id="noanim-tab-example">
-        <Tab eventKey={3} key="graphs" title="Report">
-          <div style={{padding: 10, height: window.innerHeight, overflow: "scroll"}}>
-            <FullReport jobs={this.store.selectedJobs}/>
-          </div>
-        </Tab>
-        <Tab eventKey={4} key="status" title="Status">
-          <div style={{padding: 10, height: window.innerHeight, overflow: "scroll"}}>
-            <AppStatus store={this.store}/>
-          </div>
-        </Tab>
-      </Tabs>
-    </div>
+    return <div>
+      <div className="sidebar">
+        <Tabs defaultActiveKey={1} animation={false} id="noanim-tab-example">
+          <Tab eventKey={1} key="runs" title="Runs">
+            <div style={{ padding: 10 }}>
+              <JobList jobStatusFilter={JobStatus.Completed} store={this.store.jobs} listHeight={window.innerHeight - 200} />
+            </div>
+          </Tab>
+          <Tab eventKey={2} key="jobs" title="Running / Pending Jobs">
+            <div style={{ padding: 10 }}>
+              <JobList detailed jobStatusFilter={JobStatus.Running | JobStatus.Pending} store={this.store.jobs} listHeight={window.innerHeight - 200} />
+            </div>
+          </Tab>
+        </Tabs>
+      </div>
+      <div className="content">
+        <Tabs defaultActiveKey={3} animation={false} id="noanim-tab-example">
+          <Tab eventKey={3} key="graphs" title="Report">
+            <div style={{ padding: 10, height: window.innerHeight, overflow: "scroll" }}>
+              <FullReport jobs={this.store.selectedJobs} />
+            </div>
+          </Tab>
+          <Tab eventKey={4} key="status" title="Status">
+            <div style={{ padding: 10, height: window.innerHeight, overflow: "scroll" }}>
+              <AppStatus store={this.store} />
+            </div>
+          </Tab>
+        </Tabs>
+      </div>
     </div>
   }
 }

@@ -6,7 +6,7 @@ import { BDRatePlot, sortArray, ScatterPlotSeries, PlotAxis } from "./Plot";
 import { VideoReport, BDRateReportComponent } from "./Report";
 import { JobSelector } from "./Widgets";
 import { Promise } from "es6-promise";
-import { Analyzer } from "./Widgets";
+import { AnalyzerSelector, AnalyzerComponent } from "./Widgets";
 
 import { AppStore, Jobs, Job, JobStatus, loadXHR, ReportField, reportFieldNames, metricNames, metricNameToReportFieldIndex } from "../stores/Stores";
 declare var google: any;
@@ -23,7 +23,6 @@ export class FullReport extends React.Component<{
     fit: boolean;
     stack: boolean;
     jobsToCompare: Job[];
-    analyzerFiles: { [index: string]: { value: string, label: string } [] }
   }> {
   constructor() {
     super();
@@ -142,7 +141,7 @@ export class FullReport extends React.Component<{
           {tabs}
         </Tabs>
         <div style={{ paddingBottom: 8, paddingTop: 4 }}>
-          <Analyzer video={video} jobs={jobs}/>
+          <AnalyzerSelector video={video} jobs={jobs}/>
         </div>
       </Panel>
     </div>

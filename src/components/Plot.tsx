@@ -26,6 +26,10 @@ export class Size {
     this.h = h;
     return this;
   }
+
+  clone(): Size {
+    return new Size(this.w, this.h);
+  }
 }
 
 function segmentIntersection(a0: Point, a1: Point, b0: Point, b1: Point) {
@@ -625,7 +629,11 @@ export class Matrix {
     }
     return false;
   }
-
+  transformSize(size: Size): Size {
+    size.w *= this.getScaleX();
+    size.h *= this.getScaleY();
+    return size;
+  }
   transformRectangleAABB(rectangle: Rectangle) {
     var m = this._data;
     if (this._type === MatrixType.Identity) {
@@ -1098,6 +1106,17 @@ export class Plot<P extends PlotProps, S extends PlotState> extends React.Compon
     b = this.transform.transformPoint(b.clone());
     this.drawDeviceLine(a, b);
   }
+  fillRect(p: Point, s: Size) {
+    p = this.transform.transformPoint(p.clone());
+    s = this.transform.transformSize(s.clone());
+    this.fillDeviceRect(p, s);
+  }
+  fillDeviceRect(p: Point, s: Size) {
+    let c = this.ctx;
+    c.beginPath()
+    c.fillRect(p.x, p.y, s.w, s.h);
+    c.fill();
+  }
   drawDeviceLine(a: Point, b: Point) {
     let c = this.ctx;
     c.beginPath()
@@ -1461,6 +1480,109 @@ export class BDRatePlot extends ScatterPlot<BDRatePlotProps, BDRatePlotState> {
       let dp = this.transform.transformPoint(last.clone());
       dp.x = this.device.w;
       this.drawDeviceText(dp, s, -8, 8, "right", "bottom", 7);
+    }
+  }
+}
+
+export module Data {
+  export class Table {
+    columns: Column [] = [];
+    rows: Row [] = [];
+    addColumn(type: string, name: string) {
+      this.columns.push(new Column(type, name));
+    }
+    addRow(row: Row) {
+      this.rows.push(row);
+    }
+    addRows(rows: any [][]) {
+      rows.forEach(row => {
+        this.addRow(new Row(row.map(value => {
+          return new Cell(value);
+        })))
+      });
+    }
+    // sumCol(col: number) {
+    //   let sum = 0;
+    //   this.rows.forEach(row => sum += row.cells[col].value);
+    //   return sum;
+    // }
+  }
+  export class Column {
+    constructor(
+      public type: string,
+      public name: string) {
+      // ...
+    }
+  }
+  export class Cell {
+    constructor(public value: any) {
+      // ...
+    }
+  }
+  export class Row {
+    constructor(public cells: Cell []) {
+      // ...
+    }
+    sumCells(start: number, end: number = this.cells.length) {
+      let sum = 0;
+      for (let i = start; i < end; i++) {
+        sum += this.cells[i].value;
+      }
+      return sum;
+    }
+  }
+}
+
+export interface BarPlotTable {
+
+}
+interface BarPlotProps extends PlotProps {
+  table: Data.Table;
+  isStacked: "relative" | "absolute"
+}
+interface BarPlotState extends PlotState {
+
+}
+
+let colorPool = [
+  '#a6cee3', '#1f78b4', '#b2df8a', '#33a02c', '#fb9a99', '#e31a1c', '#fdbf6f', '#ff7f00', '#cab2d6', '#6a3d9a', '#b15928'
+];
+
+export class BarPlot<P extends BarPlotProps, S extends BarPlotState> extends Plot<P, S> {
+  constructor(props: BarPlotProps) {
+    super();
+    this.state = { data: props.table } as any;
+  }
+  draw() {
+    super.draw();
+    let c = this.ctx;
+    let a = new Point(0, 0);
+    let table = this.props.table;
+    let isRelative = this.props.isStacked === "relative";
+    if (isRelative) {
+      this.viewport = new Rectangle(0, 0, this.device.w, 1);
+      this.updateTransform();
+    }
+    let r = this.ratio;
+    let barW = 8 * r;
+    let barWPadding = 1 * r;
+    let maxBars = (this.device.w / (barW + barWPadding)) | 0;
+    for (let i = 0; i < table.rows.length; i++) {
+      let row = table.rows[i];
+      let p = new Point((i % maxBars) * (barW + barWPadding), 0);
+      let s = new Size(barW, 0);
+      let sum = 0;
+      if (isRelative) {
+        sum = row.sumCells(1);
+        for (let j = 1; j < row.cells.length; j++) {
+          let cell = row.cells[j];
+          let cellH = cell.value / sum;
+          c.fillStyle = colorPool[j % colorPool.length];
+          s.h = cellH;
+          this.fillRect(p, s);
+          p.y += s.h;
+        }
+      }
     }
   }
 }

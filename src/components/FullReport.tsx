@@ -182,6 +182,7 @@ export class FullReport extends React.Component<{
         <Button active={this.state.stack} onClick={this.onStackClick.bind(this)}>Enlarge Charts</Button>
       </div>
       <div style={{ paddingTop: 8 }}>
+        {this.renderVideoReport("Total", this.state.stack)}
         {report}
         {tables}
       </div>

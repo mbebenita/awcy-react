@@ -61,10 +61,11 @@
             font-size: 11px;
           }
           .tableHeader {
-            font-size: 11px;
+            font-size: 12px;
             font-family: 'Roboto Mono', monospace;
-            vertical-align: top;
             text-align: center;
+            width: 100px;
+            vertical-align: top !important;
           }
           .highlightedTableHeader {
             background-color: #F0D3FF;
@@ -74,7 +75,7 @@
             text-align: center;
           }
           .tableValue {
-            font-size: 10px;
+            font-size: 11px;
             font-family: 'Roboto Mono', monospace;
             text-align: right;
           }
@@ -84,13 +85,13 @@
             text-align: left;
           }
           .positiveTableValue {
-            font-size: 10px;
+            font-size: 12px;
             font-family: 'Roboto Mono', monospace;
             text-align: right;
             background-color: #E3FFE3;
           }
           .negativeTableValue {
-            font-size: 10px;
+            font-size: 12px;
             font-family: 'Roboto Mono', monospace;
             text-align: right;
             background-color: #FFF1E3;
@@ -119,6 +120,21 @@
             right: 0;
             height: 1200px;
             top: 40px;
+          }
+
+          .glyphicon-refresh-animate {
+              -animation: spin .7s infinite linear;
+              -webkit-animation: spin2 .7s infinite linear;
+          }
+
+          @-webkit-keyframes spin2 {
+              from { -webkit-transform: rotate(0deg);}
+              to { -webkit-transform: rotate(360deg);}
+          }
+
+          @keyframes spin {
+              from { transform: scale(1) rotate(0deg);}
+              to { transform: scale(1) rotate(360deg);}
           }
         </style>
         <div id="xiphbar">

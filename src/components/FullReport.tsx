@@ -3,7 +3,7 @@ import { Table, ListGroup, ListGroupItem } from "react-bootstrap";
 import { Jumbotron, Grid, Popover, OverlayTrigger, Navbar, Checkbox, Form, FormGroup, ControlLabel, FormControl, HelpBlock, Modal, Panel, Label, Col, Row, Button, ProgressBar, Badge, ButtonToolbar, DropdownButton, MenuItem } from "react-bootstrap";
 
 import { BDRatePlot, sortArray, ScatterPlotSeries, PlotAxis } from "./Plot";
-import { VideoReport } from "./Report";
+import { VideoReport, BDRateReportComponent } from "./Report";
 import { JobSelector } from "./Widgets";
 import { Promise } from "es6-promise";
 
@@ -21,7 +21,6 @@ export class FullReport extends React.Component<{
     qualities: number[],
     fit: boolean;
     stack: boolean;
-    showReport: boolean;
     jobsToCompare: Job[]
   }> {
   constructor() {
@@ -29,7 +28,6 @@ export class FullReport extends React.Component<{
     this.state = {
       fit: true,
       stack: false,
-      showReport: true,
       jobsToCompare: [],
       metrics: ["MSSSIM"],
       videos: [],
@@ -86,9 +84,6 @@ export class FullReport extends React.Component<{
   }
   onStackClick() {
     this.setState({ stack: !this.state.stack } as any);
-  }
-  onShowReportClick() {
-    this.setState({ showReport: !this.state.showReport } as any);
   }
   renderVideoReport(video: string, stack: boolean) {
     let jobs = this.props.jobs.jobs;
@@ -169,10 +164,7 @@ export class FullReport extends React.Component<{
       }
       tables.push(this.renderVideoReport(video, this.state.stack));
     }
-    let report = null;
-    if (this.state.showReport) {
-      report = <VideoReport job={jobsToCompare[0]} otherJob={jobsToCompare[1]} highlightColumns={metrics} filterQualities={qualities} />
-    }
+    let report = <BDRateReportComponent a={jobsToCompare[0]} b={jobsToCompare[1]}/>
     return <div style={{ width: "980px" }}>
       <div>
         <JobSelector metrics={this.state.metrics} jobs={this.props.jobs.jobs} onChange={this.onJobSelectorChange.bind(this)} />
@@ -183,9 +175,6 @@ export class FullReport extends React.Component<{
         </div>
       {totalVideoReport}
       <div style={{ paddingTop: 8 }}>
-        <div style={{ paddingBottom: 8 }}>
-          <Button active={this.state.showReport} onClick={this.onShowReportClick.bind(this)}>{this.state.showReport ? "Hide" : "View"} Summary Report</Button>
-        </div>
         {report}
         {tables}
       </div>

@@ -20,10 +20,10 @@ export class SubmitJob extends Action {
 import { Promise } from "es6-promise"
 import { AsyncEvent } from 'ts-events';
 
-// let baseUrl = "https://arewecompressedyet.com/";
-let baseUrl = "https://beta.arewecompressedyet.com/";
+let baseUrl = "https://arewecompressedyet.com/";
+// let baseUrl = "https://beta.arewecompressedyet.com/";
 
-function zip(a: string[], b: any[]) {
+function zip<T>(a: string[], b: T[]): { [index: string]: T } {
   let o = {};
   for (let i = 0; i < a.length; i++) {
     o[a[i]] = b[i];
@@ -37,10 +37,13 @@ export function loadXHR(path: string, next: (json: any) => void, type = "json") 
   xhr.open("GET", path, true);
   xhr.responseType = type;
   xhr.send();
+
   xhr.addEventListener("load", function () {
     if (xhr.status != 200) {
+      console.error("Failed to load XHR: " + path);
       return;
     }
+    console.info("Loaded XHR: " + path);
     next(this.response);
   });
 }
@@ -72,6 +75,59 @@ export enum ReportField {
 }
 
 export type Report = { [name: string]: number[][] };
+
+export type BDRateReportJSON = {
+  metric_names: string[],
+  average: {
+    [index: string]: number
+  },
+  metric_data: {
+    [name: string]: {
+      [index: string]: number
+    }
+  }
+};
+
+export class BDRateReport {
+  a: Job;
+  b: Job;
+  average: { [name: string]: number }
+  metrics: {
+    [video: string]: {
+      [name: string]: number
+    }
+  };
+  metricNames: string [];
+  static fromJSON(a: Job, b: Job, json: BDRateReportJSON): BDRateReport {
+    function toMap(data: { [index: string]: number }, names: string[]) {
+      return zip(names, names.map((name, i) => data[i]))
+    }
+    let report = new BDRateReport();
+    let names = json.metric_names.map((name) => {
+      switch (name) {
+        case "CIEDE2000": return "CIEDE 2000";
+        case "PSNRHVS": return "PSNR HVS";
+        case "MSSSIM": return "MS SSIM";
+      }
+      return name;
+    });
+    report.a = a;
+    report.b = b;
+    report.average = toMap(json.average, names);
+    report.metrics = { };
+    let videos = [];
+    for (let k in json.metric_data) {
+      videos.push(k);
+    }
+    videos.sort();
+    videos.forEach((video) => {
+      report.metrics[video] = toMap(json.metric_data[video], names)
+    });
+    // TODO AWCY returns an extra column.
+    report.metricNames = names.slice(0, 10);
+    return report;
+  }
+}
 
 export let metricNames = [
   "PSNR Y", "PSNR HVS", "SSIM", "FAST SSIM", "CIEDE 2000",
@@ -244,8 +300,7 @@ export class Jobs {
 }
 
 let colorPool = [
-  '#a6cee3','#1f78b4','#b2df8a','#33a02c','#fb9a99','#e31a1c','#fdbf6f','#ff7f00','#cab2d6','#6a3d9a','#b15928'
-  // `#FF0000`, `#00FF00`, `#0000FF`, `#FF00FF`, `#0000FF`, `#800000`, `#008080`, `#000080`
+  '#a6cee3', '#1f78b4', '#b2df8a', '#33a02c', '#fb9a99', '#e31a1c', '#fdbf6f', '#ff7f00', '#cab2d6', '#6a3d9a', '#b15928'
 ];
 
 function getColorForString(s: string): string {
@@ -303,23 +358,38 @@ export class AppStore {
   }
   loadAWS() {
     loadXHR(baseUrl + "describeAutoScalingInstances", (json) => {
+      if (!json) return;
       this.aws.AutoScalingInstances = json.AutoScalingInstances;
       this.onAWSChange.post("loaded");
     });
     loadXHR(baseUrl + "describeAutoScalingGroups", (json) => {
+      if (!json) return;
       this.aws.AutoScalingGroups = json.AutoScalingGroups;
       this.onAWSChange.post("loaded");
     });
   }
-  loadBDRateReport(a: Job, b: Job) {
-    // betaBaseUrl + "bd_rate" + `?a=${a.id}&b=${}`
-    // https://beta.arewecompressedyet.com/bd_rate?
-    // a=int-init-qm-2016-09-09T14-25-37.630Z&
-    // b=daala-master-2016-09-09T15-34-15.715Z&
-    // method=report-overlap&
-    // set=objective-1-fast&
-    // file=objective-1-fast/total.out&
-    // format=json
+  static bdRateReportCache: { [path: string]: BDRateReport } = {};
+  static loadBDRateReport(a: Job, b: Job, set: string, method = "report-overlap"): Promise<BDRateReport> {
+    let args = [
+      "a=" + encodeURI(a.id),
+      "b=" + encodeURI(b.id),
+      "set=" + encodeURI(set),
+      "method=" + encodeURI(method),
+      "file=" + "REMOVEME",
+      "format=json"
+    ];
+    let url = baseUrl + "bd_rate?" + args.join("&");
+    if (AppStore.bdRateReportCache[url]) {
+      let report = AppStore.bdRateReportCache[url];
+      return Promise.resolve(report);
+    }
+    return new Promise((resolve, reject) => {
+      loadXHR(url, (json) => {
+        let report = BDRateReport.fromJSON(a, b, json);
+        AppStore.bdRateReportCache[url] = report;
+        resolve(report);
+      })
+    });
   }
   loadJobs() {
     loadXHR(baseUrl + "sets.json", (json) => {

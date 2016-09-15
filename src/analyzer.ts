@@ -190,7 +190,22 @@ export class Analyzer {
     });
   }
 
-  static loadDecoder(path: string): Promise<Analyzer> {
+  static fileExists(url: string): Promise<boolean> {
+    return new Promise((resolve, reject) => {
+      let xhr = new XMLHttpRequest();
+      let self = this;
+      xhr.open("HEAD", url, true);
+      xhr.send();
+      xhr.addEventListener("load", function () {
+        if (xhr.status != 404) {
+          resolve(true);
+        }
+        resolve(false);
+      });
+    });
+  }
+
+  static loadDecoder(url: string): Promise<Analyzer> {
     return new Promise((resolve, reject) => {
       let s = document.createElement('script');
       let self = this;
@@ -200,14 +215,14 @@ export class Analyzer {
           noExitRuntime: true,
           preRun: [],
           postRun: [function() {
-            console.info(`Loaded Decoder: ${path}.`);
+            console.info(`Loaded Decoder: ${url}.`);
           }],
           memoryInitializerPrefixURL: "bin/",
           arguments: ['input.ivf', 'output.raw']
         };
         resolve(new Analyzer(DecoderModule(Module)));
       }
-      s.setAttribute('src', path);
+      s.setAttribute('src', url);
       document.body.appendChild(s);
     });
   }

@@ -8,22 +8,29 @@ let Select = require('react-select');
 
 declare var tinycolor: any;
 
-export class JobListItem extends React.Component<{
+interface JobListItemProps {
   job: Job;
   detailed?: boolean;
   onCancel?: (job: Job) => void;
-}, {
+}
+
+export class JobListItem extends React.Component<JobListItemProps, {
     job: Job,
     progress: JobProgress;
     showCancelModal: boolean;
+    hasAnalyzer: undefined | boolean;
   }> {
+  constructor(props: JobListItemProps) {
+    super();
+    this.state = {
+      job: props.job,
+      progress: new JobProgress(0, 0),
+      showCancelModal: false,
+      hasAnalyzer: undefined
+    };
+  }
   componentWillMount() {
     let job = this.props.job;
-    this.state = {
-      job,
-      progress: new JobProgress(0, 0),
-      showCancelModal: false
-    };
     job.onChange.attach(() => {
       this.setState({ job, progress: job.progress } as any);
     });
@@ -38,6 +45,10 @@ export class JobListItem extends React.Component<{
     } else {
       AppDispatcher.dispatch(new SelectJob(this.state.job));
     }
+    // Check analyzer status.
+    job.hasAnalyzer().then(result => {
+      this.setState({hasAnalyzer: result} as any);
+    });
   }
   abortCancel() {
     this.setState({ showCancelModal: false } as any);
@@ -79,6 +90,12 @@ export class JobListItem extends React.Component<{
     } else {
       select = <Button onClick={this.onToggleSelectionClick.bind(this)}>{job.selected ? "Deselect " + job.selectedName : "Select"}</Button>
     }
+    let hasAnalyzer = null;
+    if (this.state.hasAnalyzer !== undefined) {
+      if (this.state.hasAnalyzer === false) {
+        hasAnalyzer = <span className="jobWarning">Analyzer failed to build.</span>
+      }
+    }
     return <div className="list-group-item" style={{ borderRight: job.selected ? "4px solid " + job.color : undefined}}>
       <Modal show={this.state.showCancelModal} onHide={this.abortCancel.bind(this)}>
         <Modal.Header closeButton>
@@ -92,6 +109,7 @@ export class JobListItem extends React.Component<{
           <Button onClick={this.abortCancel.bind(this)}>No</Button>
         </Modal.Footer>
       </Modal>
+      {hasAnalyzer}
       {progress}
       <div className="value">{job.id}</div>
       <div>
@@ -277,12 +295,13 @@ export class SubmitJobForm extends React.Component<{
   }
 }
 
-export class JobList extends React.Component<{
+interface JobListProps {
   store: Jobs;
   jobStatusFilter?: JobStatus;
   detailed?: boolean;
   listHeight: number
-}, {
+}
+export class JobList extends React.Component<JobListProps, {
     jobs: Job[];
     jobStatusFilter: JobStatus;
     showSubmitJobForm: boolean;
@@ -291,11 +310,11 @@ export class JobList extends React.Component<{
     author: Option;
     configs: Option[];
   }> {
-  constructor() {
+  constructor(props: JobListProps) {
     super();
     this.state = {
       jobs: [],
-      jobStatusFilter: JobStatus.All,
+      jobStatusFilter: props.jobStatusFilter,
       showSubmitJobForm: false,
     } as any;
   }
@@ -304,9 +323,6 @@ export class JobList extends React.Component<{
     this.props.store.onChange.attach(() => {
       this.setState({ jobs: this.props.store.jobs } as any);
     });
-    if (this.props.jobStatusFilter !== undefined) {
-      this.setState({ jobStatusFilter: this.props.jobStatusFilter } as any);
-    }
   }
 
   onChangeCodec(codec: Option) {
@@ -434,3 +450,5 @@ export class JobList extends React.Component<{
     }
   }
 }
+
+

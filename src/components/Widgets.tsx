@@ -1,7 +1,7 @@
 import * as React from "react";
 import { Button, Panel } from "react-bootstrap";
 import { } from "react-bootstrap";
-import { Jobs, Job, metricNames } from "../stores/Stores";
+import { AppDispatcher, Jobs, Job, metricNames, AnalyzeFile } from "../stores/Stores";
 import { Analyzer, Accounting, AccountingSymbol } from "../analyzer";
 
 import { BarPlot, BarPlotTable, Data } from "./Plot";
@@ -170,7 +170,7 @@ interface AnalyzerProps {
   jobs: Job []
 }
 
-export class AnalyzerSelector extends React.Component<AnalyzerProps, {
+export class AnalyzerVideoSelector extends React.Component<AnalyzerProps, {
   jobs: Job [];
   options: { value: string, label: string } [];
   selected: { value: string, label: string } [];
@@ -209,34 +209,28 @@ export class AnalyzerSelector extends React.Component<AnalyzerProps, {
     this.setState({selected} as any);
   }
   onAnalyzeClick() {
-
+    AppDispatcher.dispatch(new AnalyzeFile("http://aomanalyzer.org/bin/decoder.js", "crosswalk_30.ivf"));
   }
   render() {
     let options = this.state.options;
     let selected = this.state.selected;
-    let analyzer = null;
-    if (selected.length) {
-      analyzer = <AnalyzerComponent decoderPath="http://aomanalyzer.org/bin/decoder.js" videoPath="crosswalk_30.ivf"/>
-    }
     return <div style={{ paddingBottom: 8, paddingTop: 4 }}>
       <div className="row">
         <div className="col-xs-6" style={{ paddingBottom: 8 }}>
-          <Select multi placeholder="Analyzer Files" value={selected} options={options} onChange={this.onChange.bind(this)} />
+          <Select multi placeholder="Select files to analyze." value={selected} options={options} onChange={this.onChange.bind(this)} />
         </div>
         <div className="col-xs-6" style={{ paddingBottom: 8 }}>
-          <Button disabled={selected.length == 0} onClick={this.onAnalyzeClick.bind(this)}>Analyze Files</Button>
+          <Button disabled={selected.length == 0} onClick={this.onAnalyzeClick.bind(this)}>Open in Analyzer</Button>{' '}
+          <Button disabled={selected.length == 0} onClick={this.onAnalyzeClick.bind(this)}>Open in Tabs</Button>
         </div>
-      </div>
-      <div>
-        {analyzer}
       </div>
     </div>
   }
 }
 
 export class AnalyzerComponent extends React.Component<{
-  decoderPath: string;
-  videoPath: string;
+  decoderUrl: string;
+  videoUrl: string;
 }, {
   analyzer: Analyzer;
   interval: number;
@@ -246,7 +240,7 @@ export class AnalyzerComponent extends React.Component<{
     this.state = { analyzer: null, interval: 0 };
   }
   componentWillMount() {
-    this.load(this.props.decoderPath, this.props.videoPath);
+    this.load(this.props.decoderUrl, this.props.videoUrl);
   }
   load(decoderPath: string, videoPath: string) {
     Analyzer.loadDecoder(decoderPath).then((analyzer) => {

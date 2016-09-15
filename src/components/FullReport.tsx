@@ -6,7 +6,7 @@ import { BDRatePlot, sortArray, ScatterPlotSeries, PlotAxis } from "./Plot";
 import { VideoReport, BDRateReportComponent } from "./Report";
 import { JobSelector } from "./Widgets";
 import { Promise } from "es6-promise";
-import { AnalyzerSelector, AnalyzerComponent } from "./Widgets";
+import { AnalyzerVideoSelector, AnalyzerComponent } from "./Widgets";
 
 import { AppStore, Jobs, Job, JobStatus, loadXHR, ReportField, reportFieldNames, metricNames, metricNameToReportFieldIndex } from "../stores/Stores";
 declare var google: any;
@@ -119,12 +119,11 @@ export class FullReport extends React.Component<{
     }
     let tabs = jobs.map((job, i) => {
       return <Tab eventKey={i} key={job.id} title={job.id}>
-        <div style={{padding: 10}}>
+        <div style={{paddingTop: 10}}>
           <VideoReport name={video} job={job} highlightColumns={metrics} filterQualities={qualities} />
         </div>
       </Tab>
     });
-
     return <div key={video}>
       <Panel header={video}>
         <Table condensed bordered={false}>
@@ -140,13 +139,9 @@ export class FullReport extends React.Component<{
         <Tabs animation={false} id="noanim-tab-example">
           {tabs}
         </Tabs>
-        <div style={{ paddingBottom: 8, paddingTop: 4 }}>
-          <AnalyzerSelector video={video} jobs={jobs}/>
-        </div>
+        <AnalyzerVideoSelector video={video} jobs={jobs}/>
       </Panel>
     </div>
-
-    // <VideoReport name={video} job={jobsToCompare[0]} otherJob={jobsToCompare[1]} highlightColumns={metrics} filterQualities={qualities} />
   }
   render() {
     console.debug("Rendering Full Report");
@@ -156,7 +151,6 @@ export class FullReport extends React.Component<{
         <p>No runs selected.</p>
       </div>
     }
-
     let tables = [];
     let job = jobs[0];
     let otherJob = jobs[1];

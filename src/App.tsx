@@ -37,19 +37,24 @@ export class App extends React.Component<AppProps, AppState> {
     this.store.onChange.attach(() => {
       this.forceUpdate();
     });
+
+    this.store.onAnalyzedFilesChanged.attach(() => {
+      this.forceUpdate();
+    });
   }
 
   componentDidMount() {
     this.store.load();
   }
 
-  onJobSelected(job: Job) {
-    debugger;
-    AppDispatcher.dispatch(new SelectJob(job));
-  }
-
-
   render() {
+    let analyzerTabs = this.store.analyzedFiles.map((o, i) => {
+      return <Tab eventKey={5 + i} key={o.decoderUrl + o.videoUrl + i} title={"Analyzer: " + o.videoUrl}>
+        <div style={{ padding: 10, height: window.innerHeight, overflow: "scroll" }}>
+          <AnalyzerComponent decoderUrl={o.decoderUrl} videoUrl={o.videoUrl}/>
+        </div>
+      </Tab>
+    });
     console.debug("Rendering App");
     return <div>
       <div className="sidebar">
@@ -78,6 +83,7 @@ export class App extends React.Component<AppProps, AppState> {
               <AppStatus store={this.store} />
             </div>
           </Tab>
+          {analyzerTabs}
         </Tabs>
       </div>
     </div>

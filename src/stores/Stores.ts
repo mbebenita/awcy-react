@@ -1,4 +1,5 @@
 import { Dispatcher } from "flux";
+import { Analyzer } from "../analyzer";
 
 export var AppDispatcher = new Dispatcher<Action>();
 export class Action { }
@@ -16,7 +17,12 @@ export class CancelJob extends Action {
 export class SubmitJob extends Action {
   constructor(public job: Job) { super(); }
 }
+export class AnalyzeFile extends Action {
+  constructor(public decoderUrl: string, public fileUrl: string) { super(); }
+}
 
+
+import { AnalyzerComponent } from "../components/Widgets";
 import { Promise } from "es6-promise"
 import { AsyncEvent } from 'ts-events';
 
@@ -172,6 +178,7 @@ export class Job {
   constructor() {
 
   }
+
   loadLog(refresh = false): Promise<string> {
     if (this.log && !refresh) {
       return Promise.resolve(this.log);
@@ -225,6 +232,10 @@ export class Job {
       let data = textArray.map(text => text.split("\n").filter(line => !!line).map(line => line.trim().split(" ").map(value => Number(value))));
       return this.report = zip(names, data);
     });
+  }
+
+  hasAnalyzer(): Promise<boolean> {
+    return Analyzer.fileExists(baseUrl + `runs/${this.id}/js/decoder.js`);
   }
 
   static fromJSON(json: any) {
@@ -318,10 +329,10 @@ export class AppStore {
   onChange = new AsyncEvent<string>();
   runningJob: Job;
   onRunningJobChange = new AsyncEvent<string>();
-
   aws: any;
   onAWSChange = new AsyncEvent<string>();
-
+  analyzedFiles = [];
+  onAnalyzedFilesChanged = new AsyncEvent<string>();
   constructor() {
     this.jobs = new Jobs();
     this.selectedJobs = new Jobs();
@@ -350,6 +361,9 @@ export class AppStore {
           this.runningJob = null
         }
         this.onRunningJobChange.post("job-cancelled");
+      } else if (action instanceof AnalyzeFile) {
+        this.analyzedFiles.push({job: null, decoderUrl: "http://aomanalyzer.org/bin/decoder.js", videoUrl: "crosswalk_30.ivf"})
+        this.onAnalyzedFilesChanged.post("change");
       }
     });
   }

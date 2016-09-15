@@ -1065,7 +1065,7 @@ export class Plot<P extends PlotProps, S extends PlotState> extends React.Compon
     this.canvas.height = this.device.h;
     let ratio = this.device.h / this.device.w;
     this.viewport = new Rectangle(0, 0, 1, 1);
-    this.logical = new Rectangle(-1024, -1024, 2048, 2048);
+    this.logical = new Rectangle(-1024 * 16, -1024 * 16, 1024 * 17, 1024 * 17);
     this.ctx.setTransform(1, 0, 0, -1, 0, this.device.h);
   }
   componentWillReceiveProps(nextProps: P, nextContext: any) {

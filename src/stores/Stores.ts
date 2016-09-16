@@ -169,6 +169,7 @@ export class Job {
   runABCompare: boolean = false;
   saveEncodedFiles: boolean = false;
   status: JobStatus = JobStatus.None;
+  date: Date;
   log: string = "";
   progress: JobProgress = new JobProgress(0, 0);
   selected: boolean = false;
@@ -235,7 +236,7 @@ export class Job {
   }
 
   hasAnalyzer(): Promise<boolean> {
-    return Analyzer.fileExists(baseUrl + `runs/${this.id}/js/decoder.js`);
+    return Analyzer.Analyzer.fileExists(baseUrl + `runs/${this.id}/js/decoder.js`);
   }
 
   static fromJSON(json: any) {
@@ -441,6 +442,7 @@ export class AppStore {
       json = json.slice(0, 100);
       json.forEach(o => {
         let job = Job.fromJSON(o.info);
+        job.date = new Date(o.date);
         job.status = JobStatus.Completed;
         this.jobs.addJobInternal(job);
       });

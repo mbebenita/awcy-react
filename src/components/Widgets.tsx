@@ -2,7 +2,7 @@ import * as React from "react";
 import { Button, Panel } from "react-bootstrap";
 import { } from "react-bootstrap";
 import { AppDispatcher, Jobs, Job, metricNames, AnalyzeFile } from "../stores/Stores";
-import { Analyzer, Accounting, AccountingSymbol } from "../analyzer";
+import { Analyzer } from "../analyzer";
 
 import { BarPlot, BarPlotTable, Data } from "./Plot";
 
@@ -196,7 +196,7 @@ export class AnalyzerVideoSelector extends React.Component<AnalyzerProps, {
         if (!report) return;
         let options = this.state.options;
         report[video].forEach((row) => {
-          options.push({ value: job.id + " " + row[0], label: job.id + " @ " + row[0] });
+          options.push({ value: {A: job.id + " " + row[0]} as any, label: job.id + " @ " + row[0] });
         })
         this.setState({options} as any);
       });
@@ -209,6 +209,9 @@ export class AnalyzerVideoSelector extends React.Component<AnalyzerProps, {
     this.setState({selected} as any);
   }
   onAnalyzeClick() {
+    // AppDispatcher.dispatch(new AnalyzeFile("http://aomanalyzer.org/bin/decoder.js", "crosswalk_30.ivf"));
+  }
+  onAnalyzeInTabClick() {
     AppDispatcher.dispatch(new AnalyzeFile("http://aomanalyzer.org/bin/decoder.js", "crosswalk_30.ivf"));
   }
   render() {
@@ -221,7 +224,7 @@ export class AnalyzerVideoSelector extends React.Component<AnalyzerProps, {
         </div>
         <div className="col-xs-6" style={{ paddingBottom: 8 }}>
           <Button disabled={selected.length == 0} onClick={this.onAnalyzeClick.bind(this)}>Open in Analyzer</Button>{' '}
-          <Button disabled={selected.length == 0} onClick={this.onAnalyzeClick.bind(this)}>Open in Tabs</Button>
+          <Button disabled={selected.length == 0} onClick={this.onAnalyzeInTabClick.bind(this)}>Open in Tabs</Button>
         </div>
       </div>
     </div>
@@ -232,7 +235,7 @@ export class AnalyzerComponent extends React.Component<{
   decoderUrl: string;
   videoUrl: string;
 }, {
-  analyzer: Analyzer;
+  analyzer: Analyzer.Analyzer;
   interval: number;
 }> {
   constructor() {
@@ -243,9 +246,9 @@ export class AnalyzerComponent extends React.Component<{
     this.load(this.props.decoderUrl, this.props.videoUrl);
   }
   load(decoderPath: string, videoPath: string) {
-    Analyzer.loadDecoder(decoderPath).then((analyzer) => {
+    Analyzer.Analyzer.loadDecoder(decoderPath).then((analyzer) => {
       console.info(analyzer);
-      Analyzer.downloadFile(videoPath).then((bytes) => {
+      Analyzer.Analyzer.downloadFile(videoPath).then((bytes) => {
         analyzer.openFileBytes(bytes);
         this.setState({analyzer} as any);
       });
@@ -277,7 +280,7 @@ export class AnalyzerComponent extends React.Component<{
       return table;
     }
     table.addColumn("string", "Frame");
-    let names = Accounting.getSortedSymbolNames(analyzer.frames.map(frame => frame.accounting));
+    let names = Analyzer.Accounting.getSortedSymbolNames(analyzer.frames.map(frame => frame.accounting));
     names.forEach(name => {
       table.addColumn("number", name)
     });
@@ -295,6 +298,33 @@ export class AnalyzerComponent extends React.Component<{
     table.addRows(rows);
     return table;
   }
+  getHistogramData(histogram: "predictionModeHistogram" | "blockSizeHistogram"): Data.Table {
+    var table = new Data.Table();
+    let analyzer = this.state.analyzer;
+    if (!analyzer) {
+      return table;
+    }
+    let e = null;
+    if (histogram === "predictionModeHistogram") {
+      e = Analyzer.PredictionMode;
+    } else if (histogram === "blockSizeHistogram") {
+      e = Analyzer.BlockSize;
+    }
+    table.addColumn("string", "Frame");
+    for (let i = 0; i <= e.LAST; i++) {
+      table.addColumn('number', e[i]);
+    }
+    let rows = [];
+    analyzer.frames.forEach((frame, i) => {
+      let row = [i];
+      for (let j = 0; j <= e.LAST; j++) {
+        row.push(frame[histogram].counts[j]);
+      }
+      rows.push(row);
+    });
+    table.addRows(rows);
+    return table;
+  }
   render() {
     console.debug("Rendering Analyzer");
     let analyzer = this.state.analyzer;
@@ -304,7 +334,10 @@ export class AnalyzerComponent extends React.Component<{
       </Panel>
     }
     return <Panel header="Analyzer">
-      <BarPlot width={800} height={200} table={this.getData()} isStacked="relative"/>
+      <BarPlot width={800} height={100} table={this.getData()} isStacked="relative"/>
+      <BarPlot width={800} height={100} table={this.getData()} isStacked="absolute"/>
+      <BarPlot width={800} height={100} table={this.getHistogramData("blockSizeHistogram")} isStacked="relative"/>
+      <BarPlot width={800} height={100} table={this.getHistogramData("predictionModeHistogram")} isStacked="relative"/>
       <div style={{ paddingBottom: 8, paddingTop: 4 }}>
         <Button onClick={this.onClick.bind(this)}>Play / Pause Video</Button>
       </div>

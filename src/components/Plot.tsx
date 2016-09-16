@@ -1554,7 +1554,8 @@ export class BarPlot<P extends BarPlotProps, S extends BarPlotState> extends Plo
     this.state = { data: props.table } as any;
   }
   draw() {
-    super.draw();
+    this.updateTransform();
+    this.drawBackground();
     let c = this.ctx;
     let a = new Point(0, 0);
     let table = this.props.table;
@@ -1567,16 +1568,33 @@ export class BarPlot<P extends BarPlotProps, S extends BarPlotState> extends Plo
     let barW = 8 * r;
     let barWPadding = 1 * r;
     let maxBars = (this.device.w / (barW + barWPadding)) | 0;
+    let maxRowSum = 0;
+    if (!isRelative) {
+      for (let i = 0; i < table.rows.length; i++) {
+        let row = table.rows[i];
+        maxRowSum = Math.max(maxRowSum, row.sumCells(1));
+      }
+      this.viewport = new Rectangle(0, 0, this.device.w, maxRowSum);
+      this.updateTransform();
+    }
     for (let i = 0; i < table.rows.length; i++) {
       let row = table.rows[i];
       let p = new Point((i % maxBars) * (barW + barWPadding), 0);
       let s = new Size(barW, 0);
-      let sum = 0;
       if (isRelative) {
-        sum = row.sumCells(1);
+        let rowSum = row.sumCells(1);
         for (let j = 1; j < row.cells.length; j++) {
           let cell = row.cells[j];
-          let cellH = cell.value / sum;
+          let cellH = cell.value / rowSum;
+          c.fillStyle = colorPool[j % colorPool.length];
+          s.h = cellH;
+          this.fillRect(p, s);
+          p.y += s.h;
+        }
+      } else {
+        for (let j = 1; j < row.cells.length; j++) {
+          let cell = row.cells[j];
+          let cellH = cell.value;
           c.fillStyle = colorPool[j % colorPool.length];
           s.h = cellH;
           this.fillRect(p, s);

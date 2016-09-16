@@ -58,6 +58,20 @@ export class JobListItem extends React.Component<JobListItemProps, {
     this.props.onCancel(this.state.job);
   }
   render() {
+    function timeSince(date: Date) {
+      var oneSecond = 1000;
+      var oneMinute = 60 * oneSecond;
+      var oneHour = 60 * oneMinute;
+      var oneDay = 24 * oneHour;
+      let diff = new Date().getTime() - date.getTime();
+      var days = Math.round(Math.abs(diff / oneDay));
+      var hours = Math.round(Math.abs(diff % oneDay) / oneHour);
+      let s = "";
+      if (days > 0) {
+        s += `${days} days, `
+      }
+      return s + `${hours} hour${hours === 1 ? "" : "s"} ago`;
+    }
     let job = this.props.job;
     // let color = job.color ? tinycolor(job.color).desaturate().toString() : "";
     let progress = null;
@@ -96,7 +110,10 @@ export class JobListItem extends React.Component<JobListItemProps, {
         hasAnalyzer = <span className="jobWarning">Analyzer failed to build.</span>
       }
     }
-    return <div className="list-group-item" style={{ borderRight: job.selected ? "4px solid " + job.color : undefined}}>
+    let date = job.date ? `${job.date.toLocaleDateString()} ${job.date.toLocaleTimeString()} (${timeSince(job.date)})`: "";
+    let borderRight = job.selected ? "4px solid " + job.color : undefined;
+    let backgroundColor = job.buildOptions === "" ? "#D3E7ED": "";
+    return <div className="list-group-item" style={{ borderRight, backgroundColor}}>
       <Modal show={this.state.showCancelModal} onHide={this.abortCancel.bind(this)}>
         <Modal.Header closeButton>
           <Modal.Title>Cancel job?</Modal.Title>
@@ -114,6 +131,12 @@ export class JobListItem extends React.Component<JobListItemProps, {
       <div className="value">{job.id}</div>
       <div>
         <span className="tinyValue">{job.nick}, {job.codec}, {job.commit}</span>
+      </div>
+      <div>
+        <span className="tinyValue">{date}</span>
+      </div>
+      <div>
+        <span className="tinyValue">{job.buildOptions}</span>
       </div>
       {details}
       <ButtonToolbar style={{ paddingTop: 8 }}>

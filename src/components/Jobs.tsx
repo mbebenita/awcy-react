@@ -112,7 +112,10 @@ export class JobListItem extends React.Component<JobListItemProps, {
     }
     let date = job.date ? `${job.date.toLocaleDateString()} ${job.date.toLocaleTimeString()} (${timeSince(job.date)})`: "";
     let borderRight = job.selected ? "4px solid " + job.color : undefined;
-    let backgroundColor = job.buildOptions === "" ? "#D3E7ED": "";
+    let backgroundColor = (job.buildOptions === "" && job.extraOptions === "") ? "#D3E7ED": "";
+    let options = [];
+    if (job.buildOptions) options.push("Build: " + job.buildOptions);
+    if (job.extraOptions) options.push("Extra: " + job.extraOptions);
     return <div className="list-group-item" style={{ borderRight, backgroundColor}}>
       <Modal show={this.state.showCancelModal} onHide={this.abortCancel.bind(this)}>
         <Modal.Header closeButton>
@@ -129,14 +132,14 @@ export class JobListItem extends React.Component<JobListItemProps, {
       {hasAnalyzer}
       {progress}
       <div className="value">{job.id}</div>
-      <div>
-        <span className="tinyValue">{job.nick}, {job.codec}, {job.commit}</span>
+      <div className="tinyJobValue">
+        {job.nick}, {job.codec}, {job.commit}
       </div>
-      <div>
-        <span className="tinyValue">{date}</span>
+      <div className="tinyJobValue">
+        {date}
       </div>
-      <div>
-        <span className="tinyValue">{job.buildOptions}</span>
+      <div className="tinyJobValue">
+        {options.join(", ")}
       </div>
       {details}
       <ButtonToolbar style={{ paddingTop: 8 }}>

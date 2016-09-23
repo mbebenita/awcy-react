@@ -311,6 +311,24 @@ export class Jobs {
   }
 }
 
+function forEachUrlParameter(callback: (key: string, value: string) => void) {
+  let url = window.location.search.substring(1);
+  url = url.replace(/\/$/, ""); // Replace / at the end that gets inserted by browsers.
+  let params = {};
+  url.split('&').forEach(function (s) {
+    let t = s.split('=');
+    callback(t[0], decodeURIComponent(t[1]));
+  });
+}
+
+function getUrlParameters(): any {
+  let params = {};
+  forEachUrlParameter((key, value) => {
+    params[key] = value;
+  });
+  return params;
+};
+
 let colorPool = [
   '#a6cee3', '#1f78b4', '#b2df8a', '#33a02c', '#fb9a99', '#e31a1c', '#fdbf6f', '#ff7f00', '#cab2d6', '#6a3d9a', '#b15928'
 ];
@@ -406,6 +424,16 @@ export class AppStore {
       })
     });
   }
+  processUrlParameters() {
+    forEachUrlParameter((key, value) => {
+      if (key === "job") {
+        let job = this.jobs.jobs.find((job) => job.id === value);
+        if (job) {
+          AppDispatcher.dispatch(new SelectJob(job));
+        }
+      }
+    });
+  }
   loadJobs() {
     loadXHR(baseUrl + "sets.json", (json) => {
       Job.sets = json;
@@ -448,6 +476,7 @@ export class AppStore {
       });
       this.jobs.onChange.post("job-added");
 
+      this.processUrlParameters();
       // AppDispatcher.dispatch(new SelectJob(this.jobs.jobs[0]));
       // AppDispatcher.dispatch(new SelectJob(this.jobs.jobs[1]));
     });

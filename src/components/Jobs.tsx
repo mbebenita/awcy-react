@@ -131,7 +131,7 @@ export class JobListItem extends React.Component<JobListItemProps, {
       </Modal>
       {hasAnalyzer}
       {progress}
-      <div className="value">{job.id}</div>
+      <div className="jobValue">{job.id}</div>
       <div className="tinyJobValue">
         {job.nick}, {job.codec}, {job.commit}
       </div>

@@ -114,10 +114,17 @@ export class AppStatusComponent extends React.Component<{
       jobs[job.nick].push(job);
       totalJobCount++;
     });
-
     let jobsByAuthor = [];
     for (let author in jobs) {
+      let awards = [];
+      if (author === "codeview") {
+        for (let i = 0; i < jobs[author].length; i++) {
+          let src = ["img/bottle.png", "img/mug.png", "img/beer.png"][Math.random() * 3 | 0];
+          awards.push(<img src={src} style={{height: 32, padding: 2}}/>);
+        }
+      }
       jobsByAuthor.push(<Panel header={author + " " + jobs[author].length} key={author}>
+        {awards}
         {jobs[author].map(job => {
           let date = job.date ? `${job.date.toLocaleDateString()} ${job.date.toLocaleTimeString()} (${timeSince(job.date)})`: "";
           return <div className="value" key={job.id}>{job.id}, {date}</div>

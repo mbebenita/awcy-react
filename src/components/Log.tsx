@@ -2,9 +2,9 @@ import * as React from "react";
 import { ListGroup, ListGroupItem } from "react-bootstrap";
 import { Table, Popover, OverlayTrigger, Navbar, Checkbox, Form, FormGroup, ControlLabel, FormControl, HelpBlock, Modal, Panel, Label, Col, Row, Button, ProgressBar, Badge, ButtonToolbar, DropdownButton, MenuItem } from "react-bootstrap";
 import { Job, Jobs, AppStore } from "../stores/Stores";
-import { JobListItem } from "./Jobs";
+import { JobListItemComponent } from "./Jobs";
 
-export class Log extends React.Component<{
+export class JobLogComponent extends React.Component<{
   job: Job
 }, {
     text: string
@@ -26,7 +26,7 @@ export class Log extends React.Component<{
   }
 }
 
-export class AppStatus extends React.Component<{
+export class AppStatusComponent extends React.Component<{
   store: AppStore
 }, {
     runningJob: Job;
@@ -94,10 +94,10 @@ export class AppStatus extends React.Component<{
     let log = null;
     if (this.state.runningJob) {
       info = <Panel header="Running Job Info">
-        <JobListItem detailed job={this.state.runningJob}/>
+        <JobListItemComponent detailed job={this.state.runningJob}/>
       </Panel>
       log = <Panel header="Running Job Log">
-        <Log job={this.state.runningJob} />
+        <JobLogComponent job={this.state.runningJob} />
       </Panel>
     }
 

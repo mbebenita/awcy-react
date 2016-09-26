@@ -8,8 +8,8 @@ import { Panel } from "react-bootstrap";
 import { Tabs, Tab } from "react-bootstrap";
 
 import { FullReportComponent } from "./components/FullReport"
-import { JobList } from "./components/Jobs"
-import { Log, AppStatus } from "./components/Log"
+import { JobListComponent } from "./components/Jobs"
+import { JobLogComponent, AppStatusComponent } from "./components/Log"
 
 import { AppStore, Job, JobStatus, SelectJob, AppDispatcher } from "./stores/Stores"
 
@@ -61,12 +61,12 @@ export class App extends React.Component<AppProps, AppState> {
         <Tabs defaultActiveKey={1} animation={false} id="noanim-tab-example">
           <Tab eventKey={1} key="runs" title="Runs">
             <div style={{ padding: 10 }}>
-              <JobList jobStatusFilter={JobStatus.Completed} store={this.store.jobs} listHeight={window.innerHeight - 200} />
+              <JobListComponent jobStatusFilter={JobStatus.Completed} store={this.store.jobs} listHeight={window.innerHeight - 200} />
             </div>
           </Tab>
           <Tab eventKey={2} key="jobs" title="Running / Pending Jobs">
             <div style={{ padding: 10 }}>
-              <JobList detailed jobStatusFilter={JobStatus.Running | JobStatus.Pending} store={this.store.jobs} listHeight={window.innerHeight - 200} />
+              <JobListComponent detailed jobStatusFilter={JobStatus.Running | JobStatus.Pending} store={this.store.jobs} listHeight={window.innerHeight - 200} />
             </div>
           </Tab>
           <Tab eventKey={3} key="share" title="Share">
@@ -85,7 +85,7 @@ export class App extends React.Component<AppProps, AppState> {
           </Tab>
           <Tab eventKey={4} key="status" title="Status">
             <div style={{ padding: 10, height: window.innerHeight, overflow: "scroll" }}>
-              <AppStatus store={this.store} />
+              <AppStatusComponent store={this.store} />
             </div>
           </Tab>
           {analyzerTabs}

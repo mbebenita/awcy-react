@@ -4,9 +4,9 @@ import { Jumbotron, Grid, Popover, OverlayTrigger, Navbar, Checkbox, Form, FormG
 
 import { BDRatePlot, sortArray, ScatterPlotSeries, PlotAxis } from "./Plot";
 import { VideoReportComponent, BDRateReportComponent } from "./Report";
-import { JobSelector } from "./Widgets";
+import { JobSelectorComponent } from "./Widgets";
 import { Promise } from "es6-promise";
-import { AnalyzerVideoSelector, AnalyzerComponent } from "./Widgets";
+import { AnalyzerVideoSelectorComponent, AnalyzerComponent } from "./Widgets";
 
 import { AppStore, Jobs, Job, JobStatus, loadXHR, ReportField, reportFieldNames, metricNames, metricNameToReportFieldIndex } from "../stores/Stores";
 declare var google: any;
@@ -139,7 +139,7 @@ export class FullReportComponent extends React.Component<{
         <Tabs animation={false} id="noanim-tab-example">
           {tabs}
         </Tabs>
-        <AnalyzerVideoSelector video={video} jobs={jobs}/>
+        <AnalyzerVideoSelectorComponent video={video} jobs={jobs}/>
       </Panel>
     </div>
   }
@@ -169,7 +169,7 @@ export class FullReportComponent extends React.Component<{
     let report = <BDRateReportComponent a={jobsToCompare[0]} b={jobsToCompare[1]}/>
     return <div style={{ width: "980px" }}>
       <div>
-        <JobSelector metrics={this.state.metrics} jobs={this.props.jobs.jobs} onChange={this.onJobSelectorChange.bind(this)} />
+        <JobSelectorComponent metrics={this.state.metrics} jobs={this.props.jobs.jobs} onChange={this.onJobSelectorChange.bind(this)} />
       </div>
       <div style={{ paddingBottom: 8, paddingTop: 4 }}>
         <Button active={this.state.fit} onClick={this.onFitClick.bind(this)}>Scale Charts</Button>{' '}

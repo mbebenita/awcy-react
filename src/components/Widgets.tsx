@@ -29,7 +29,7 @@ function arraysEqual<T>(a: T [], b: T []): boolean {
   return false
 }
 
-export class JobSelector extends React.Component<JobSelectorProps, {
+export class JobSelectorComponent extends React.Component<JobSelectorProps, {
   availableJobs: Job [];
   jobs: Option [];
   videos: Option [];
@@ -170,7 +170,7 @@ interface AnalyzerProps {
   jobs: Job []
 }
 
-export class AnalyzerVideoSelector extends React.Component<AnalyzerProps, {
+export class AnalyzerVideoSelectorComponent extends React.Component<AnalyzerProps, {
   jobs: Job [];
   options: { value: string, label: string } [];
   selected: { value: string, label: string } [];

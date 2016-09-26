@@ -14,7 +14,7 @@ interface JobListItemProps {
   onCancel?: (job: Job) => void;
 }
 
-export class JobListItem extends React.Component<JobListItemProps, {
+export class JobListItemComponent extends React.Component<JobListItemProps, {
     job: Job,
     progress: JobProgress;
     showCancelModal: boolean;
@@ -165,7 +165,7 @@ export class JobListItem extends React.Component<JobListItemProps, {
   }
 }
 
-export class SubmitJobForm extends React.Component<{
+export class SubmitJobFormComponent extends React.Component<{
   onCreate: (job: Job) => void;
   onCancel: () => void;
 }, {
@@ -342,7 +342,8 @@ interface JobListProps {
   detailed?: boolean;
   listHeight: number
 }
-export class JobList extends React.Component<JobListProps, {
+
+export class JobListComponent extends React.Component<JobListProps, {
     jobs: Job[];
     jobStatusFilter: JobStatus;
     showSubmitJobForm: boolean;
@@ -468,7 +469,7 @@ export class JobList extends React.Component<JobListProps, {
             }
             return true;
           }).map((job: Job) => {
-            return <JobListItem detailed={this.props.detailed} key={job.id} job={job} onCancel={this.onCancelJob.bind(this)}></JobListItem>
+            return <JobListItemComponent detailed={this.props.detailed} key={job.id} job={job} onCancel={this.onCancelJob.bind(this)}></JobListItemComponent>
           })}
         </ListGroup>
       </div>
@@ -485,7 +486,7 @@ export class JobList extends React.Component<JobListProps, {
   render() {
     console.debug("Rendering Job List");
     if (this.state.showSubmitJobForm) {
-      return <SubmitJobForm onCreate={this.onSubmitJob.bind(this)} onCancel={this.hideSubmitJobForm.bind(this)} />
+      return <SubmitJobFormComponent onCreate={this.onSubmitJob.bind(this)} onCancel={this.hideSubmitJobForm.bind(this)} />
     } else {
       return this.makeJobList();
     }

@@ -3,7 +3,7 @@ import { Tabs, Tab, Table, ListGroup, ListGroupItem } from "react-bootstrap";
 import { Jumbotron, Grid, Popover, OverlayTrigger, Navbar, Checkbox, Form, FormGroup, ControlLabel, FormControl, HelpBlock, Modal, Panel, Label, Col, Row, Button, ProgressBar, Badge, ButtonToolbar, DropdownButton, MenuItem } from "react-bootstrap";
 
 import { BDRatePlot, sortArray, ScatterPlotSeries, PlotAxis } from "./Plot";
-import { VideoReport, BDRateReportComponent } from "./Report";
+import { VideoReportComponent, BDRateReportComponent } from "./Report";
 import { JobSelector } from "./Widgets";
 import { Promise } from "es6-promise";
 import { AnalyzerVideoSelector, AnalyzerComponent } from "./Widgets";
@@ -14,7 +14,7 @@ declare var tinycolor: any;
 declare var require: any;
 let Select = require('react-select');
 
-export class FullReport extends React.Component<{
+export class FullReportComponent extends React.Component<{
   jobs: Jobs;
 }, {
     metrics: string[],
@@ -120,7 +120,7 @@ export class FullReport extends React.Component<{
     let tabs = jobs.map((job, i) => {
       return <Tab eventKey={i} key={job.id} title={job.id}>
         <div style={{paddingTop: 10}}>
-          <VideoReport name={video} job={job} highlightColumns={metrics} filterQualities={qualities} />
+          <VideoReportComponent name={video} job={job} highlightColumns={metrics} filterQualities={qualities} />
         </div>
       </Tab>
     });

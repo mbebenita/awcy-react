@@ -7,7 +7,7 @@ import { Col, Row } from "react-bootstrap";
 import { Panel } from "react-bootstrap";
 import { Tabs, Tab } from "react-bootstrap";
 
-import { FullReport } from "./components/FullReport"
+import { FullReportComponent } from "./components/FullReport"
 import { JobList } from "./components/Jobs"
 import { Log, AppStatus } from "./components/Log"
 
@@ -80,7 +80,7 @@ export class App extends React.Component<AppProps, AppState> {
         <Tabs defaultActiveKey={3} animation={false} id="noanim-tab-example">
           <Tab eventKey={3} key="graphs" title="Report">
             <div style={{ padding: 10, height: window.innerHeight, overflow: "scroll" }}>
-              <FullReport jobs={this.store.selectedJobs} />
+              <FullReportComponent jobs={this.store.selectedJobs} />
             </div>
           </Tab>
           <Tab eventKey={4} key="status" title="Status">

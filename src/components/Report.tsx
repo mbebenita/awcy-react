@@ -29,7 +29,7 @@ interface VideoReportProps {
   filterQualities?: number [];
 }
 
-export class VideoReport extends React.Component<VideoReportProps, {
+export class VideoReportComponent extends React.Component<VideoReportProps, {
   jobReport: Report;
 }> {
   constructor() {

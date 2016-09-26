@@ -136,7 +136,7 @@ export class FullReport extends React.Component<{
             {rows}
           </tbody>
         </Table>
-        <Tabs bsStyle="pills" animation={false} id="noanim-tab-example">
+        <Tabs animation={false} id="noanim-tab-example">
           {tabs}
         </Tabs>
         <AnalyzerVideoSelector video={video} jobs={jobs}/>

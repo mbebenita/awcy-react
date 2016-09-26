@@ -18,6 +18,7 @@ export class JobListItem extends React.Component<JobListItemProps, {
     job: Job,
     progress: JobProgress;
     showCancelModal: boolean;
+    hasReport: undefined | boolean;
     hasAnalyzer: undefined | boolean;
   }> {
   constructor(props: JobListItemProps) {
@@ -26,6 +27,7 @@ export class JobListItem extends React.Component<JobListItemProps, {
       job: props.job,
       progress: new JobProgress(0, 0),
       showCancelModal: false,
+      hasReport: undefined,
       hasAnalyzer: undefined
     };
   }
@@ -45,9 +47,12 @@ export class JobListItem extends React.Component<JobListItemProps, {
     } else {
       AppDispatcher.dispatch(new SelectJob(this.state.job));
     }
-    // Check analyzer status.
+    // Check analyzer and report status.
     job.hasAnalyzer().then(result => {
       this.setState({hasAnalyzer: result} as any);
+    });
+    job.hasReport().then(result => {
+      this.setState({hasReport: result} as any);
     });
   }
   abortCancel() {
@@ -107,12 +112,21 @@ export class JobListItem extends React.Component<JobListItemProps, {
     let hasAnalyzer = null;
     if (this.state.hasAnalyzer !== undefined) {
       if (this.state.hasAnalyzer === false) {
-        hasAnalyzer = <span className="jobWarning">Analyzer failed to build.</span>
+        hasAnalyzer = <div className="jobWarning">Analyzer failed to build.</div>
+      }
+    }
+    let hasReport = null;
+    if (this.state.hasReport !== undefined) {
+      if (this.state.hasReport === false) {
+        hasReport = <div className="jobWarning">Report failed to build or is not yet available.</div>
       }
     }
     let date = job.date ? `${job.date.toLocaleDateString()} ${job.date.toLocaleTimeString()} (${timeSince(job.date)})`: "";
     let borderRight = job.selected ? "4px solid " + job.color : undefined;
     let backgroundColor = (job.buildOptions === "" && job.extraOptions === "") ? "#D3E7ED": "";
+    if (job.selected) {
+      backgroundColor = "#F0F0F0";
+    }
     let options = [];
     if (job.buildOptions) options.push("Build: " + job.buildOptions);
     if (job.extraOptions) options.push("Extra: " + job.extraOptions);
@@ -130,6 +144,7 @@ export class JobListItem extends React.Component<JobListItemProps, {
         </Modal.Footer>
       </Modal>
       {hasAnalyzer}
+      {hasReport}
       {progress}
       <div className="jobValue">{job.id}</div>
       <div className="tinyJobValue">

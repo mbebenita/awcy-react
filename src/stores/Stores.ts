@@ -41,7 +41,7 @@ export function loadXHR(path: string, next: (json: any) => void, type = "json") 
   let xhr = new XMLHttpRequest();
   let self = this;
   xhr.open("GET", path, true);
-  xhr.responseType = type;
+  xhr.responseType = "text";
   xhr.send();
 
   xhr.addEventListener("load", function () {
@@ -50,7 +50,27 @@ export function loadXHR(path: string, next: (json: any) => void, type = "json") 
       return;
     }
     console.info("Loaded XHR: " + path);
-    next(this.response);
+    let response = this.responseText;
+    if (type === "json") {
+      response = response.replace(/NaN/g, "null");
+      response = response ? JSON.parse(response) : null;
+    }
+    next(response);
+  });
+}
+
+export function fileExists(url: string): Promise<boolean> {
+  return new Promise((resolve, reject) => {
+    let xhr = new XMLHttpRequest();
+    let self = this;
+    xhr.open("HEAD", url, true);
+    xhr.send();
+    xhr.addEventListener("load", function () {
+      if (xhr.status != 404) {
+        resolve(true);
+      }
+      resolve(false);
+    });
   });
 }
 
@@ -236,7 +256,11 @@ export class Job {
   }
 
   hasAnalyzer(): Promise<boolean> {
-    return Analyzer.Analyzer.fileExists(baseUrl + `runs/${this.id}/js/decoder.js`);
+    return fileExists(baseUrl + `runs/${this.id}/js/decoder.js`);
+  }
+
+  hasReport(): Promise<boolean> {
+    return fileExists(baseUrl + `runs/${this.id}/${this.task}/total.out`);
   }
 
   static fromJSON(json: any) {

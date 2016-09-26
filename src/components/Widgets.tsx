@@ -1,7 +1,7 @@
 import * as React from "react";
 import { Button, Panel } from "react-bootstrap";
 import { } from "react-bootstrap";
-import { AppDispatcher, Jobs, Job, metricNames, AnalyzeFile } from "../stores/Stores";
+import { AppStore, AppDispatcher, Jobs, Job, metricNames, AnalyzeFile } from "../stores/Stores";
 import { Analyzer } from "../analyzer";
 
 import { BarPlot, BarPlotTable, Data } from "./Plot";
@@ -342,5 +342,25 @@ export class AnalyzerComponent extends React.Component<{
         <Button onClick={this.onClick.bind(this)}>Play / Pause Video</Button>
       </div>
     </Panel>
+  }
+}
+
+export class ShareComponent extends React.Component<{
+  store: AppStore;
+}, {
+
+}> {
+  constructor() {
+    super();
+    this.state = { };
+  }
+  componentWillMount() {
+  }
+  render() {
+    let url = location.protocol + '//' + location.host + location.pathname + "?";
+    url +=  this.props.store.selectedJobs.jobs.map(job => {
+      return "job=" + encodeURIComponent(job.id);
+    }).join("&");
+    return <div><div>Sharing URL</div><a className="url" href={url}>{url}</a></div>
   }
 }

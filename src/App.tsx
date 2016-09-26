@@ -13,7 +13,7 @@ import { Log, AppStatus } from "./components/Log"
 
 import { AppStore, Job, JobStatus, SelectJob, AppDispatcher } from "./stores/Stores"
 
-import { AnalyzerComponent } from "./components/Widgets"
+import { AnalyzerComponent, ShareComponent } from "./components/Widgets"
 
 export interface AppProps { }
 export interface AppState { }
@@ -67,6 +67,11 @@ export class App extends React.Component<AppProps, AppState> {
           <Tab eventKey={2} key="jobs" title="Running / Pending Jobs">
             <div style={{ padding: 10 }}>
               <JobList detailed jobStatusFilter={JobStatus.Running | JobStatus.Pending} store={this.store.jobs} listHeight={window.innerHeight - 200} />
+            </div>
+          </Tab>
+          <Tab eventKey={3} key="share" title="Share">
+            <div style={{ padding: 10 }}>
+              <ShareComponent store={this.store} />
             </div>
           </Tab>
         </Tabs>

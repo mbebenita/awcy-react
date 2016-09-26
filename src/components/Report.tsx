@@ -156,7 +156,7 @@ export class BDRateReportComponent extends React.Component<BDRateReportProps, {
 
     let rows = [];
     function toRow(video: string, data) {
-      let cols = [<td key={"fileName"} className="tableValue">{video}</td>];
+      let cols = [<td key={"fileName"} className="longTableValue">{video}</td>];
       cols = cols.concat(report.metricNames.map(name =>
         makeTableCell(name, data[name], true, (n) => n.toFixed(2))
       ));

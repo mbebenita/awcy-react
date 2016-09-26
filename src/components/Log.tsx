@@ -117,10 +117,10 @@ export class AppStatusComponent extends React.Component<{
 
     let jobsByAuthor = [];
     for (let author in jobs) {
-      jobsByAuthor.push(<Panel header={author + " " + jobs[author].length}>
+      jobsByAuthor.push(<Panel header={author + " " + jobs[author].length} key={author}>
         {jobs[author].map(job => {
           let date = job.date ? `${job.date.toLocaleDateString()} ${job.date.toLocaleTimeString()} (${timeSince(job.date)})`: "";
-          return <div className="value">{job.id}, {date}</div>
+          return <div className="value" key={job.id}>{job.id}, {date}</div>
         })}
       </Panel>);
     }

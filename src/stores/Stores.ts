@@ -74,6 +74,30 @@ export function fileExists(url: string): Promise<boolean> {
   });
 }
 
+export function daysSince(date: Date) {
+  var oneSecond = 1000;
+  var oneMinute = 60 * oneSecond;
+  var oneHour = 60 * oneMinute;
+  var oneDay = 24 * oneHour;
+  let diff = new Date().getTime() - date.getTime();
+  return Math.round(Math.abs(diff / oneDay));
+}
+
+export function timeSince(date: Date) {
+  var oneSecond = 1000;
+  var oneMinute = 60 * oneSecond;
+  var oneHour = 60 * oneMinute;
+  var oneDay = 24 * oneHour;
+  let diff = new Date().getTime() - date.getTime();
+  var days = Math.round(Math.abs(diff / oneDay));
+  var hours = Math.round(Math.abs(diff % oneDay) / oneHour);
+  let s = "";
+  if (days > 0) {
+    s += `${days} days, `
+  }
+  return s + `${hours} hour${hours === 1 ? "" : "s"} ago`;
+}
+
 export enum JobStatus {
   None = 0,
   Running = 1,

@@ -1,7 +1,7 @@
 import * as React from "react";
 import { ListGroup, ListGroupItem } from "react-bootstrap";
 import { Table, Popover, OverlayTrigger, Navbar, Checkbox, Form, FormGroup, ControlLabel, FormControl, HelpBlock, Modal, Panel, Label, Col, Row, Button, ProgressBar, Badge, ButtonToolbar, DropdownButton, MenuItem } from "react-bootstrap";
-import { Job, Jobs, AppStore } from "../stores/Stores";
+import { Job, Jobs, AppStore, timeSince, daysSince} from "../stores/Stores";
 import { JobListItemComponent } from "./Jobs";
 
 export class JobLogComponent extends React.Component<{
@@ -101,11 +101,38 @@ export class AppStatusComponent extends React.Component<{
       </Panel>
     }
 
+    let store = this.props.store;
+    let jobs = {};
+    let totalJobCount = 0;
+    store.jobs.jobs.forEach(job => {
+      if (job.date && daysSince(job.date) > 14) {
+        return;
+      }
+      if (!(job.nick in jobs)) {
+        jobs[job.nick] = [];
+      }
+      jobs[job.nick].push(job);
+      totalJobCount++;
+    });
+
+    let jobsByAuthor = [];
+    for (let author in jobs) {
+      jobsByAuthor.push(<Panel header={author + " " + jobs[author].length}>
+        {jobs[author].map(job => {
+          let date = job.date ? `${job.date.toLocaleDateString()} ${job.date.toLocaleTimeString()} (${timeSince(job.date)})`: "";
+          return <div className="value">{job.id}, {date}</div>
+        })}
+      </Panel>);
+    }
+
     return <div style={{height: "3000px"}}>
       {info}
       {log}
       <Panel header={"AWS Status " + status}>
         {table}
+      </Panel>
+      <Panel header={totalJobCount + " Jobs (last 14 days)"}>
+        {jobsByAuthor}
       </Panel>
     </div>
   }

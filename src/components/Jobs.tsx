@@ -1,7 +1,7 @@
 import * as React from "react";
 import { ListGroup, ListGroupItem } from "react-bootstrap";
 import { Popover, OverlayTrigger, Navbar, Checkbox, Form, FormGroup, ControlLabel, FormControl, HelpBlock, Modal, Panel, Label, Col, Row, Button, ProgressBar, Badge, ButtonToolbar, DropdownButton, MenuItem } from "react-bootstrap";
-import { AppDispatcher, Action, SelectJob, DeselectJob, CancelJob, SubmitJob , AppStore, Jobs, Job, JobStatus, JobProgress } from "../stores/Stores";
+import { AppDispatcher, Action, SelectJob, DeselectJob, CancelJob, SubmitJob , AppStore, Jobs, Job, JobStatus, JobProgress, timeSince } from "../stores/Stores";
 import { Option } from "./Widgets"
 declare var require: any;
 let Select = require('react-select');
@@ -63,20 +63,6 @@ export class JobListItemComponent extends React.Component<JobListItemProps, {
     this.props.onCancel(this.state.job);
   }
   render() {
-    function timeSince(date: Date) {
-      var oneSecond = 1000;
-      var oneMinute = 60 * oneSecond;
-      var oneHour = 60 * oneMinute;
-      var oneDay = 24 * oneHour;
-      let diff = new Date().getTime() - date.getTime();
-      var days = Math.round(Math.abs(diff / oneDay));
-      var hours = Math.round(Math.abs(diff % oneDay) / oneHour);
-      let s = "";
-      if (days > 0) {
-        s += `${days} days, `
-      }
-      return s + `${hours} hour${hours === 1 ? "" : "s"} ago`;
-    }
     let job = this.props.job;
     // let color = job.color ? tinycolor(job.color).desaturate().toString() : "";
     let progress = null;

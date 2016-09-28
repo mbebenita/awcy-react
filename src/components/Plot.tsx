@@ -1,4 +1,5 @@
 import * as React from "react";
+import { ScaleLinear, ScaleLogarithmic, scaleLinear, scaleLog } from "d3-scale";
 
 export function floorTo(v: number, round: number) {
   return Math.floor(v / round) * round;
@@ -10,6 +11,25 @@ export function ceilTo(v: number, round: number) {
 
 export function epsilonEquals(value: number, other: number): boolean {
   return Math.abs(value - other) < 0.0000001;
+}
+
+export class Margins {
+  t: number;
+  r: number;
+  b: number;
+  l: number;
+  constructor(t: number, r: number, b: number, l: number) {
+    this.t = t;
+    this.r = r;
+    this.b = b;
+    this.l = l;
+  }
+  scale(s: number) {
+    this.t *= s;
+    this.r *= s;
+    this.b *= s;
+    this.l *= s;
+  }
 }
 
 export class Size {
@@ -1012,28 +1032,53 @@ interface PlotProps {
   height: number;
 }
 
-interface PlotState {
-}
+interface PlotState {}
 
 export interface PlotAxis {
   title?: string;
   min?: number;
   max?: number;
+  log?: boolean
 }
 
 export class Plot<P extends PlotProps, S extends PlotState> extends React.Component<P, S> {
   canvas: HTMLCanvasElement;
   ctx: CanvasRenderingContext2D;
   ratio: number = window.devicePixelRatio;
-  transform = Matrix.createIdentity();
+
+  yScale: ScaleLinear<number, number> | ScaleLogarithmic<number, number>;
+  xScale: ScaleLinear<number, number> | ScaleLogarithmic<number, number>;
 
   device: Rectangle;
-  viewport: Rectangle;
+  // viewport: Rectangle;
   logical: Rectangle;
 
   textSize = 7;
   textPadding = 4;
 
+  tickBarW = 20;
+  tickBarH = 20;
+  margins = new Margins(10, 10, this.tickBarH, this.tickBarW);
+
+  darkTheme = {
+    backgroundColor: "#212121",
+    gridLineColor: "#424242"
+  }
+
+  lightTheme = {
+    backgroundColor: "#F1F1F1",
+    gridLineColor: "#FFFFFF",
+    tickTextColor: "#000000",
+    tickLineColor: "#616161"
+  }
+
+  theme = this.lightTheme;
+
+  constructor() {
+    super();
+    this.xScale = scaleLinear().domain([0, 1]);
+    this.yScale = scaleLinear().domain([0, 1]);
+  }
   componentDidMount() {
     this.canvas.addEventListener("mousemove", (e) => {
       var r = this.canvas.getBoundingClientRect();
@@ -1049,11 +1094,6 @@ export class Plot<P extends PlotProps, S extends PlotState> extends React.Compon
     this.draw();
     this.drawCrosshairs(dp);
   }
-  getInverseTransform(): Matrix {
-    let i = Matrix.createIdentity()
-    this.transform.inverse(i);
-    return i;
-  }
   drawCrosshairs(dp: Point, v = true, h = true) {
     this.ctx.strokeStyle = "#D0D0D0";
     h && this.drawDeviceLine(new Point(0, dp.y), new Point(this.device.w, dp.y));
@@ -1064,7 +1104,7 @@ export class Plot<P extends PlotProps, S extends PlotState> extends React.Compon
     this.canvas.width = this.device.w;
     this.canvas.height = this.device.h;
     let ratio = this.device.h / this.device.w;
-    this.viewport = new Rectangle(0, 0, 1, 1);
+    // this.viewport = new Rectangle(0, 0, 1, 1);
     this.logical = new Rectangle(-1024 * 16, -1024 * 16, 1024 * 17, 1024 * 17);
     this.ctx.setTransform(1, 0, 0, -1, 0, this.device.h);
   }
@@ -1084,31 +1124,41 @@ export class Plot<P extends PlotProps, S extends PlotState> extends React.Compon
   }
 
   draw() {
-    this.updateTransform();
+    this.updateScales();
     this.drawBackground();
     this.drawGridLines();
-    this.drawAxis();
   }
-  updateTransform() {
-    let xScale = this.device.w / this.viewport.w;
-    let yScale = this.device.h / this.viewport.h;
-    let xOffset = -this.viewport.x * xScale;
-    let yOffset = -this.viewport.y * yScale;
-    this.transform.setElements(xScale, 0, 0, yScale, xOffset, yOffset);
+  updateScales() {
+    let ratio = this.ratio;
+    let m = this.margins;
+    let t = m.t * ratio;
+    let r = m.r * ratio;
+    let b = m.b * ratio;
+    let l = m.l * ratio;
+    this.xScale.range([l, this.device.w - r]);
+    this.yScale.range([b, this.device.h - t]);
   }
-  drawBackground() {
-    this.ctx.fillStyle = "#F7F7F7";
-    let r = this.device;
-    this.ctx.fillRect(0, 0, r.w, r.h);
+  transformPoint(point: Point): Point {
+    point.x = this.xScale(point.x);
+    point.y = this.yScale(point.y);
+    return point;
+  }
+  inverseTransformPoint(point: Point): Point {
+    point.x = this.xScale.invert(point.x);
+    point.y = this.yScale.invert(point.y);
+    return point;
+  }
+  transformSize(size: Size): Size {
+    return size;
   }
   drawLine(a: Point, b: Point) {
-    a = this.transform.transformPoint(a.clone());
-    b = this.transform.transformPoint(b.clone());
+    a = this.transformPoint(a.clone());
+    b = this.transformPoint(b.clone());
     this.drawDeviceLine(a, b);
   }
   fillRect(p: Point, s: Size) {
-    p = this.transform.transformPoint(p.clone());
-    s = this.transform.transformSize(s.clone());
+    p = this.transformPoint(p.clone());
+    s = this.transformSize(s.clone());
     this.fillDeviceRect(p, s);
   }
   fillDeviceRect(p: Point, s: Size) {
@@ -1126,7 +1176,7 @@ export class Plot<P extends PlotProps, S extends PlotState> extends React.Compon
   }
   drawDot(a: Point, radius = 2) {
     let c = this.ctx;
-    a = this.transform.transformPoint(a.clone());
+    a = this.transformPoint(a.clone());
     c.beginPath()
     c.beginPath();
     c.arc(a.x, a.y, radius * this.ratio, 0, 2 * Math.PI);
@@ -1134,7 +1184,7 @@ export class Plot<P extends PlotProps, S extends PlotState> extends React.Compon
     c.fill();
   }
   drawText(a: Point, text: string, dx = 0, dy = 0, hAlign = "left", vAlign = "bottom", size = this.textSize) {
-    a = this.transform.transformPoint(a.clone());
+    a = this.transformPoint(a.clone());
     this.drawDeviceText(a, text, dx, dy, hAlign, vAlign, size);
   }
   drawDeviceText(a: Point, text: string, dx = 0, dy = 0, hAlign = "left", vAlign = "bottom", size = this.textSize) {
@@ -1147,92 +1197,68 @@ export class Plot<P extends PlotProps, S extends PlotState> extends React.Compon
     c.fillText(text, a.x + dx, -a.y + -dy);
     c.restore();
   }
-  drawAxis() {
-    let c = this.ctx;
-    c.strokeStyle = "#000000";
-    c.lineWidth = 2;
-
-    let a = Point.createEmpty();
-    let b = Point.createEmpty();
-
-    // X
-    a.setElements(this.logical.x, 0);
-    b.setElements(this.logical.x + this.logical.w, 0);
-    this.drawLine(a, b);
-
-    // Y
-    a.setElements(0, this.logical.y);
-    b.setElements(0, this.logical.y + this.logical.h);
-    this.drawLine(a, b);
-  }
-  tickBarW = 32;
-  tickBarH = 16;
-  drawTickBars() {
-    let c = this.ctx;
-    c.strokeStyle = "#FFFFFF";
-    c.fillStyle = "#AAAAAA";
-    c.lineWidth = 2;
-
-    let dx = this.viewport.w / 10;
-    let dy = this.viewport.h / 10;
-
-    let r = this.viewport.clone().snapTo(dx, dy);
-    let a = Point.createEmpty();
-    let b = Point.createEmpty();
-
-    let p = 4 * this.ratio;
-
-    // Horizontal Bar
-    c.fillStyle = "#FFFFFF";
-    c.fillRect(0, 0, this.device.w, this.tickBarH * this.ratio);
-    c.fillStyle = "#000000";
-
-    // Horizontal Labels
-    for (let x = r.x; x < r.x + r.w; x += dx) {
-      a.setElements(x, 0);
-      this.transform.transformPoint(a);
-      a.y = 0;
-      this.drawDeviceText(a, x.toFixed(2), 0, p, "center");
-    }
-
-    // Vertical Bar
-    c.fillStyle = "#FFFFFF";
-    c.fillRect(0, 0, this.tickBarW * this.ratio, this.device.h);
-    c.fillStyle = "#000000";
-
-    // Vertical Labels
-    for (let y = r.y; y < r.y + r.h; y += dy) {
-      a.setElements(0, y);
-      this.transform.transformPoint(a);
-      a.x = 0;
-      this.drawDeviceText(a, y.toFixed(2), p, 0, "left", "middle");
-    }
+  drawBackground() {
+    this.ctx.fillStyle = this.theme.backgroundColor;
+    let r = this.device;
+    this.ctx.fillRect(0, 0, r.w, r.h);
   }
   drawGridLines() {
     let c = this.ctx;
-    c.strokeStyle = "#FFFFFF";
-    c.fillStyle = "#AAAAAA";
+    c.strokeStyle = this.theme.gridLineColor;
     c.lineWidth = 2;
-
-    let dx = this.viewport.w / 10;
-    let dy = this.viewport.h / 10;
-    let r = this.viewport.clone().snapTo(dx, dy);
     let a = Point.createEmpty();
     let b = Point.createEmpty();
-
-    // Horizontal
-    for (let x = r.x; x < r.x + r.w; x += dx) {
-      a.setElements(x, r.y);
-      b.setElements(x, r.y + r.h);
+    let xDomain = this.xScale.domain();
+    let yDomain = this.yScale.domain();
+    this.xScale.ticks(10).forEach(tick => {
+      a.setElements(tick, yDomain[0]);
+      b.setElements(tick, yDomain[1]);
       this.drawLine(a, b);
-    }
-
-    // Vertical
-    for (let y = r.y; y < r.y + r.h; y += dy) {
-      a.setElements(r.x, y);
-      b.setElements(r.x + r.w, y);
+    });
+    this.yScale.ticks(5).forEach(tick => {
+      a.setElements(xDomain[0], tick);
+      b.setElements(xDomain[1], tick);
       this.drawLine(a, b);
-    }
+    });
+  }
+  drawTickBars() {
+    let c = this.ctx;
+    c.fillStyle = this.theme.tickTextColor;
+    c.lineWidth = 2;
+
+    let a = Point.createEmpty();
+    let b = Point.createEmpty();
+    let xDomain = this.xScale.domain();
+    let yDomain = this.yScale.domain();
+
+    let ticks = this.xScale.ticks(10);
+    let tickFormat = this.xScale.tickFormat(10, ".2");
+    let textPadding = this.textPadding * this.ratio;
+
+    ticks.forEach((tick, i) => {
+      a.setElements(tick, yDomain[0]);
+      this.transformPoint(a);
+      this.drawDeviceText(a, tickFormat(tick), 0, -textPadding, "center", "top");
+    });
+
+    ticks = this.yScale.ticks(5);
+    tickFormat = this.yScale.tickFormat(10, ".2");
+
+    ticks.forEach((tick, i) => {
+      a.setElements(xDomain[0], tick);
+      this.transformPoint(a);
+      this.drawDeviceText(a, tickFormat(tick), -textPadding, 0, "right", "middle");
+    });
+
+    c.strokeStyle = this.theme.tickLineColor;
+    a.setElements(xDomain[0], yDomain[0]);
+    b.setElements(xDomain[0], yDomain[1]);
+    this.drawLine(a, b);
+
+    a.setElements(xDomain[0], yDomain[0]);
+    b.setElements(xDomain[1], yDomain[0]);
+    this.drawLine(a, b);
+
   }
   render() {
     console.debug("Rendering Plot");
@@ -1319,6 +1345,8 @@ export class ScatterPlot<P extends ScatterPlotProps, S extends ScatterPlotState>
     let viewport = Rectangle.createEmpty();
     let a = Point.createEmpty();
     let r = new Rectangle(0, 0, 0, 0);
+    let xLog = false;
+    let yLog = false;
     series.forEach(s => {
       let v = s.values.slice(0);
       let xAxis = s.xAxis || {};
@@ -1326,17 +1354,13 @@ export class ScatterPlot<P extends ScatterPlotProps, S extends ScatterPlotState>
       v.push([+xAxis.min, +yAxis.min]);
       v.push([+xAxis.max, +yAxis.max]);
       r.union(Rectangle.createFromPoints(v));
+      if (xAxis.log) xLog = true;
+      if (yAxis.log) yLog = true;
     });
-
-    this.viewport = r;
-
-    let dx = ((this.tickBarW + 10) * this.ratio) * (this.viewport.w / this.device.w);
-    let dy = ((this.tickBarH + 10) * this.ratio) * (this.viewport.h / this.device.h);
-
-    this.viewport.x -= dx;
-    this.viewport.y -= dy;
-    this.viewport.w += dx * 2;
-    this.viewport.h += dy * 2;
+    this.xScale = xLog ? scaleLog() : scaleLinear();
+    this.yScale = yLog ? scaleLog() : scaleLinear();
+    this.xScale.domain([r.x, r.x + r.w]);
+    this.yScale.domain([r.y, r.y + r.h]);
   }
   drawLegend() {
     let c = this.ctx;
@@ -1402,9 +1426,8 @@ export class BDRatePlot extends ScatterPlot<BDRatePlotProps, BDRatePlotState> {
 
   drawCrosshairs(dp: Point) {
     super.drawCrosshairs(dp);
-
-    let p = this.getInverseTransform().transformPoint(dp.clone());
-
+    return;
+    let p = this.inverseTransformPoint(dp.clone());
     let series = this.state.series;
     let vIntersections: {series: ScatterPlotSeries, p: Point} [] = [];
     let hIntersections: {series: ScatterPlotSeries, p: Point} [] = [];
@@ -1469,7 +1492,7 @@ export class BDRatePlot extends ScatterPlot<BDRatePlotProps, BDRatePlotState> {
     if (hIntersections.length) {
       let last = hIntersections[hIntersections.length - 1].p;
       let s = toString(hIntersections, true);
-      let dp = this.transform.transformPoint(last.clone());
+      let dp = this.transformPoint(last.clone());
       dp.y = this.device.h;
       this.drawDeviceText(dp, s, 8, -8, "left", "top", 7);
     }
@@ -1477,7 +1500,7 @@ export class BDRatePlot extends ScatterPlot<BDRatePlotProps, BDRatePlotState> {
     if (vIntersections.length) {
       let last = vIntersections[vIntersections.length - 1].p;
       let s = toString(vIntersections, false);
-      let dp = this.transform.transformPoint(last.clone());
+      let dp = this.transformPoint(last.clone());
       dp.x = this.device.w;
       this.drawDeviceText(dp, s, -8, 8, "right", "bottom", 7);
     }
@@ -1501,11 +1524,6 @@ export module Data {
         })))
       });
     }
-    // sumCol(col: number) {
-    //   let sum = 0;
-    //   this.rows.forEach(row => sum += row.cells[col].value);
-    //   return sum;
-    // }
   }
   export class Column {
     constructor(
@@ -1554,15 +1572,15 @@ export class BarPlot<P extends BarPlotProps, S extends BarPlotState> extends Plo
     this.state = { data: props.table } as any;
   }
   draw() {
-    this.updateTransform();
+    this.updateScales();
     this.drawBackground();
     let c = this.ctx;
     let a = new Point(0, 0);
     let table = this.props.table;
     let isRelative = this.props.isStacked === "relative";
     if (isRelative) {
-      this.viewport = new Rectangle(0, 0, this.device.w, 1);
-      this.updateTransform();
+      // this.viewport = new Rectangle(0, 0, this.device.w, 1);
+      this.updateScales();
     }
     let r = this.ratio;
     let barW = 8 * r;
@@ -1574,8 +1592,8 @@ export class BarPlot<P extends BarPlotProps, S extends BarPlotState> extends Plo
         let row = table.rows[i];
         maxRowSum = Math.max(maxRowSum, row.sumCells(1));
       }
-      this.viewport = new Rectangle(0, 0, this.device.w, maxRowSum);
-      this.updateTransform();
+      // this.viewport = new Rectangle(0, 0, this.device.w, maxRowSum);
+      this.updateScales();
     }
     for (let i = 0; i < table.rows.length; i++) {
       let row = table.rows[i];

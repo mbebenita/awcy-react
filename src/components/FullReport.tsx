@@ -21,6 +21,7 @@ export class FullReportComponent extends React.Component<{
     videos: string[],
     qualities: number[],
     fit: boolean;
+    log: boolean;
     stack: boolean;
     jobsToCompare: Job[];
   }> {
@@ -28,6 +29,7 @@ export class FullReportComponent extends React.Component<{
     super();
     this.state = {
       fit: true,
+      log: true,
       stack: false,
       jobsToCompare: [],
       metrics: ["MSSSIM"],
@@ -65,13 +67,14 @@ export class FullReportComponent extends React.Component<{
         label: job.id,
         values: values,
         color: job.color,
-        xAxis: this.state.fit ? undefined : {
-          min: 0,
-          max: 1
+        xAxis: {
+          min: this.state.fit ? undefined : 0.001,
+          max: this.state.fit ? undefined : 1,
+          log: this.state.log
         },
-        yAxis: this.state.fit ? undefined : {
-          min: 0,
-          max: 50
+        yAxis: {
+          min: this.state.fit ? undefined : 0,
+          max: this.state.fit ? undefined : 50
         }
       });
     });
@@ -82,6 +85,9 @@ export class FullReportComponent extends React.Component<{
   }
   onFitClick() {
     this.setState({ fit: !this.state.fit } as any);
+  }
+  onLogClick() {
+    this.setState({ log: !this.state.log } as any);
   }
   onStackClick() {
     this.setState({ stack: !this.state.stack } as any);
@@ -172,7 +178,8 @@ export class FullReportComponent extends React.Component<{
         <JobSelectorComponent metrics={this.state.metrics} jobs={this.props.jobs.jobs} onChange={this.onJobSelectorChange.bind(this)} />
       </div>
       <div style={{ paddingBottom: 8, paddingTop: 4 }}>
-        <Button active={this.state.fit} onClick={this.onFitClick.bind(this)}>Scale Charts</Button>{' '}
+        <Button active={this.state.fit} onClick={this.onFitClick.bind(this)}>Fit Charts</Button>{' '}
+        <Button active={this.state.log} onClick={this.onLogClick.bind(this)}>Logarithmic</Button>{' '}
         <Button active={this.state.stack} onClick={this.onStackClick.bind(this)}>Enlarge Charts</Button>
       </div>
       <div style={{ paddingTop: 8 }}>

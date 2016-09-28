@@ -83,6 +83,13 @@ export function daysSince(date: Date) {
   return Math.round(Math.abs(diff / oneDay));
 }
 
+export function minutesSince(date: Date) {
+  var oneSecond = 1000;
+  var oneMinute = 60 * oneSecond;
+  let diff = new Date().getTime() - date.getTime();
+  return Math.round(Math.abs(diff / oneMinute));
+}
+
 export function timeSince(date: Date) {
   var oneSecond = 1000;
   var oneMinute = 60 * oneSecond;
@@ -232,13 +239,7 @@ export class Job {
       let path = baseUrl + `runs/${this.id}/output.txt`;
       loadXHR(path, (text) => {
         this.log = text;
-        let lastLine = text.match(/([0-9]+) out of ([0-9]+)/g).slice(-1)[0].split(' ');
-        if (lastLine) {
-          let value = Number(lastLine[0]);
-          let total = Number(lastLine[3]);
-          this.progress = new JobProgress(value, total);
-          this.onChange.post("progress");
-        }
+        this.onChange.post("updated-log");
         resolve(text);
       }, "text");
     })
@@ -435,7 +436,14 @@ export class AppStore {
     });
   }
   load() {
-    this.loadJobs();
+    this.loadJobs().then(() => {
+      this.loadAWS();
+      this.loadSets();
+      this.loadStatus();
+      setInterval(() => {
+        this.loadStatus();
+      }, 10000);
+    });
   }
   loadAWS() {
     loadXHR(baseUrl + "describeAutoScalingInstances", (json) => {
@@ -472,61 +480,60 @@ export class AppStore {
       })
     });
   }
+  findJob(id: string): Job {
+    return this.jobs.jobs.find((job) => job.id === id);
+  }
   processUrlParameters() {
     forEachUrlParameter((key, value) => {
       if (key === "job") {
-        let job = this.jobs.jobs.find((job) => job.id === value);
+        let job = this.findJob(value);
         if (job) {
           AppDispatcher.dispatch(new SelectJob(job));
         }
       }
     });
   }
-  loadJobs() {
-    loadXHR(baseUrl + "sets.json", (json) => {
-      Job.sets = json;
-    });
-
-    loadXHR(baseUrl + "run_job.json", (json) => {
-      if (!json) return;
-      let job = Job.fromJSON(json);
-      job.status = JobStatus.Running;
-      this.runningJob = job;
-      this.runningJob.loadLog();
-      this.onRunningJobChange.post("job-added");
-      this.jobs.addJob(job);
-      this.jobs.onChange.post("job-added");
-    });
-
-    loadXHR(baseUrl + "run_job_queue.json", (json) => {
+  loadStatus() {
+    loadXHR(baseUrl + "run_status.json", (json) => {
       if (!json) return;
       json.forEach(o => {
-        let job = Job.fromJSON(o);
-        job.status = JobStatus.Pending;
-        this.jobs.addJob(job);
+        let job = this.findJob(o.run_id);
+        if (!job) return;
+        job.status = JobStatus.Running;
+        job.progress.value = o.completed;
+        job.progress.total = o.total;
+        job.loadLog(true);
+        job.onChange.post("updated");
       });
-      this.jobs.onChange.post("job-added");
     });
-
-    this.loadAWS();
-
-    loadXHR(baseUrl + "list.json", (json) => {
-      json = json.filter(job => job.info.task === "objective-1-fast" && job.info.codec === "av1");
-      json.sort(function (a, b) {
-        return (new Date(b.date) as any) - (new Date(a.date) as any);
+  }
+  loadSets(): Promise<boolean> {
+    return new Promise((resolve, reject) => {
+      loadXHR(baseUrl + "sets.json", (json) => {
+        Job.sets = json;
+        resolve(true);
       });
-      json = json.slice(0, 100);
-      json.forEach(o => {
-        let job = Job.fromJSON(o.info);
-        job.date = new Date(o.date);
-        job.status = JobStatus.Completed;
-        this.jobs.addJobInternal(job);
-      });
-      this.jobs.onChange.post("job-added");
+    });
+  }
 
-      this.processUrlParameters();
-      // AppDispatcher.dispatch(new SelectJob(this.jobs.jobs[0]));
-      // AppDispatcher.dispatch(new SelectJob(this.jobs.jobs[1]));
+  loadJobs(): Promise<boolean> {
+    return new Promise((resolve, reject) => {
+      loadXHR(baseUrl + "list.json", (json) => {
+        json = json.filter(job => job.info.task === "objective-1-fast" && job.info.codec === "av1");
+        json.sort(function (a, b) {
+          return (new Date(b.date) as any) - (new Date(a.date) as any);
+        });
+        json = json.slice(0, 100);
+        json.forEach(o => {
+          let job = Job.fromJSON(o.info);
+          job.date = new Date(o.date);
+          job.status = JobStatus.Completed;
+          this.jobs.addJobInternal(job);
+        });
+        this.jobs.onChange.post("job-added");
+        resolve(true);
+        this.processUrlParameters();
+      });
     });
   }
 }

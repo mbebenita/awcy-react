@@ -1,7 +1,7 @@
 import * as React from "react";
 import { ListGroup, ListGroupItem } from "react-bootstrap";
 import { Popover, OverlayTrigger, Navbar, Checkbox, Form, FormGroup, ControlLabel, FormControl, HelpBlock, Modal, Panel, Label, Col, Row, Button, ProgressBar, Badge, ButtonToolbar, DropdownButton, MenuItem } from "react-bootstrap";
-import { AppDispatcher, Action, SelectJob, DeselectJob, CancelJob, SubmitJob , AppStore, Jobs, Job, JobStatus, JobProgress, timeSince } from "../stores/Stores";
+import { AppDispatcher, Action, SelectJob, DeselectJob, CancelJob, SubmitJob , AppStore, Jobs, Job, JobStatus, JobProgress, timeSince, minutesSince } from "../stores/Stores";
 import { Option } from "./Widgets"
 declare var require: any;
 let Select = require('react-select');
@@ -16,7 +16,6 @@ interface JobListItemProps {
 
 export class JobListItemComponent extends React.Component<JobListItemProps, {
     job: Job,
-    progress: JobProgress;
     showCancelModal: boolean;
     hasReport: undefined | boolean;
     hasAnalyzer: undefined | boolean;
@@ -25,7 +24,6 @@ export class JobListItemComponent extends React.Component<JobListItemProps, {
     super();
     this.state = {
       job: props.job,
-      progress: new JobProgress(0, 0),
       showCancelModal: false,
       hasReport: undefined,
       hasAnalyzer: undefined
@@ -34,7 +32,7 @@ export class JobListItemComponent extends React.Component<JobListItemProps, {
   componentWillMount() {
     let job = this.props.job;
     job.onChange.attach(() => {
-      this.setState({ job, progress: job.progress } as any);
+      this.setState({ job } as any);
     });
   }
   onCancelClick() {
@@ -64,28 +62,18 @@ export class JobListItemComponent extends React.Component<JobListItemProps, {
   }
   render() {
     let job = this.props.job;
-    // let color = job.color ? tinycolor(job.color).desaturate().toString() : "";
     let progress = null;
-    let jobProgress = this.state.progress;
     if (job.status === JobStatus.Running) {
-      let value = jobProgress.total ? jobProgress.value / jobProgress.total : 0;
-      progress = <ProgressBar active now={100 * value} label={`${jobProgress.value} of ${jobProgress.total}`} />
+      let value = job.progress.total ? job.progress.value / job.progress.total : 0;
+      let label = `${job.progress.value} of ${job.progress.total}`;
+      let elapsed = minutesSince(job.date);
+      let remaining = Math.round(elapsed / value - elapsed);
+      label += " (" + remaining + "m left)";
+      progress = <ProgressBar active now={100 * value} label={label} />
     } else if (job.status === JobStatus.Pending) {
       progress = <ProgressBar now={0} />
     }
     let details = null;
-    if (this.props.detailed) {
-      details = [
-        <div key="0" className="keyValuePair"><span className="key">Build Options</span>: <span className="value">{job.buildOptions}</span></div>,
-        <div key="1" className="keyValuePair"><span className="key">Extra Options</span>: <span className="value">{job.extraOptions}</span></div>,
-        <div key="2" className="keyValuePair"><span className="key">Nick</span>: <span className="value">{job.nick}</span></div>,
-        <div key="3" className="keyValuePair"><span className="key">Qualities</span>: <span className="value">{job.qualities}</span></div>,
-        <div key="4" className="keyValuePair"><span className="key">Task</span>: <span className="value">{job.task}</span></div>,
-        <div key="5" className="keyValuePair"><span className="key">Task Type</span>: <span className="value">{job.taskType}</span></div>,
-        <div key="6" className="keyValuePair"><span className="key">Run A/B Compare</span>: <span className="value">{String(job.runABCompare)}</span></div>,
-        <div key="7" className="keyValuePair"><span className="key">Save Encoded Files</span>: <span className="value">{String(job.saveEncodedFiles)}</span></div>
-      ];
-    }
     let cancel = null;
     let select = null;
     if (job.status == JobStatus.Pending || job.status == JobStatus.Running) {
@@ -113,9 +101,14 @@ export class JobListItemComponent extends React.Component<JobListItemProps, {
     if (job.selected) {
       backgroundColor = "#F0F0F0";
     }
-    let options = [];
-    if (job.buildOptions) options.push("Build: " + job.buildOptions);
-    if (job.extraOptions) options.push("Extra: " + job.extraOptions);
+    let extra = [];
+    if (job.buildOptions) extra.push("Build: " + job.buildOptions);
+    if (job.extraOptions) extra.push("Extra: " + job.extraOptions);
+    if (this.props.detailed) {
+      extra.push("Qualities: " + job.qualities);
+      extra.push("Run A/B Compare: " + job.runABCompare);
+      extra.push("Save Encoded Files: " + job.saveEncodedFiles);
+    }
     return <div className="list-group-item" style={{ borderRight, backgroundColor}}>
       <Modal show={this.state.showCancelModal} onHide={this.abortCancel.bind(this)}>
         <Modal.Header closeButton>
@@ -140,9 +133,8 @@ export class JobListItemComponent extends React.Component<JobListItemProps, {
         {date}
       </div>
       <div className="tinyJobValue">
-        {options.join(", ")}
+        {extra.join(", ")}
       </div>
-      {details}
       <ButtonToolbar style={{ paddingTop: 8 }}>
         {cancel}
         {select}

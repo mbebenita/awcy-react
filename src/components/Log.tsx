@@ -1,7 +1,7 @@
 import * as React from "react";
 import { ListGroup, ListGroupItem } from "react-bootstrap";
 import { Table, Popover, OverlayTrigger, Navbar, Checkbox, Form, FormGroup, ControlLabel, FormControl, HelpBlock, Modal, Panel, Label, Col, Row, Button, ProgressBar, Badge, ButtonToolbar, DropdownButton, MenuItem } from "react-bootstrap";
-import { Job, Jobs, AppStore, timeSince, daysSince} from "../stores/Stores";
+import { Job, Jobs, AppStore, timeSince, daysSince, JobStatus} from "../stores/Stores";
 import { JobListItemComponent } from "./Jobs";
 
 export class JobLogComponent extends React.Component<{
@@ -29,20 +29,17 @@ export class JobLogComponent extends React.Component<{
 export class AppStatusComponent extends React.Component<{
   store: AppStore
 }, {
-    runningJob: Job;
     aws: any;
   }> {
   constructor() {
     super();
-    this.state = {
-      runningJob: null
-    } as any;
+    this.state = {} as any;
   }
   componentDidMount() {
     let store = this.props.store;
     store.onRunningJobChange.attach(() => {
       this.setState({
-        runningJob: store.runningJob,
+        // runningJob: store.runningJob,
       } as any);
     });
     store.onAWSChange.attach(() => {
@@ -92,16 +89,19 @@ export class AppStatusComponent extends React.Component<{
     }
     let info = null;
     let log = null;
-    if (this.state.runningJob) {
-      info = <Panel header="Running Job Info">
-        <JobListItemComponent detailed job={this.state.runningJob}/>
-      </Panel>
-      log = <Panel header="Running Job Log">
-        <JobLogComponent job={this.state.runningJob} />
-      </Panel>
-    }
 
+    let jobInfos = [];
     let store = this.props.store;
+
+    store.jobs.jobs.forEach(job => {
+      if (job.status === JobStatus.Running) {
+        jobInfos.push(<Panel key={job.id} header="Running Job Info">
+          <JobListItemComponent detailed job={job}/>
+          <JobLogComponent job={job} />
+        </Panel>);
+      }
+    });
+
     let jobs = {};
     let totalJobCount = 0;
     store.jobs.jobs.forEach(job => {
@@ -120,7 +120,7 @@ export class AppStatusComponent extends React.Component<{
       if (author === "codeview") {
         for (let i = 0; i < jobs[author].length; i++) {
           let src = ["img/bottle.png", "img/mug.png", "img/beer.png"][Math.random() * 3 | 0];
-          awards.push(<img src={src} style={{height: 32, padding: 2}}/>);
+          awards.push(<img key={i} src={src} style={{height: 32, padding: 2}}/>);
         }
       }
       jobsByAuthor.push(<Panel header={author + " " + jobs[author].length} key={author}>
@@ -133,8 +133,7 @@ export class AppStatusComponent extends React.Component<{
     }
 
     return <div style={{height: "3000px"}}>
-      {info}
-      {log}
+      {jobInfos}
       <Panel header={"AWS Status " + status}>
         {table}
       </Panel>

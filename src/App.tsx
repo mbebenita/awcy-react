@@ -61,15 +61,10 @@ export class App extends React.Component<AppProps, AppState> {
         <Tabs defaultActiveKey={1} animation={false} id="noanim-tab-example">
           <Tab eventKey={1} key="runs" title="Runs">
             <div style={{ padding: 10 }}>
-              <JobListComponent jobStatusFilter={JobStatus.Completed} store={this.store.jobs} listHeight={window.innerHeight - 200} />
+              <JobListComponent jobStatusFilter={JobStatus.All} store={this.store.jobs} listHeight={window.innerHeight - 200} />
             </div>
           </Tab>
-          <Tab eventKey={2} key="jobs" title="Running / Pending Jobs">
-            <div style={{ padding: 10 }}>
-              <JobListComponent detailed jobStatusFilter={JobStatus.Running | JobStatus.Pending} store={this.store.jobs} listHeight={window.innerHeight - 200} />
-            </div>
-          </Tab>
-          <Tab eventKey={3} key="share" title="Share">
+          <Tab eventKey={2} key="share" title="Share">
             <div style={{ padding: 10 }}>
               <ShareComponent store={this.store} />
             </div>

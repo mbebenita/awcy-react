@@ -64,7 +64,6 @@ export class FullReportComponent extends React.Component<{
       sortArray(values, 0);
       series.push({
         name: job.selectedName,
-        label: job.id,
         values: values,
         color: job.color,
         xAxis: {
@@ -80,8 +79,8 @@ export class FullReportComponent extends React.Component<{
     });
     return series;
   }
-  onJobSelectorChange(jobsToCompare: Job[], metrics: string[], videos: string[], qualities: number[]) {
-    this.setState({ jobsToCompare, metrics, videos, qualities } as any);
+  onJobSelectorChange(metrics: string[], videos: string[], qualities: number[]) {
+    this.setState({ metrics, videos, qualities } as any);
   }
   onFitClick() {
     this.setState({ fit: !this.state.fit } as any);

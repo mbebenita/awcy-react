@@ -12,7 +12,7 @@ let Select = require('react-select');
 interface JobSelectorProps {
   jobs: Job [];
   metrics: string [];
-  onChange?: (jobs: Job [], metrics?: string [], videos?: string [], qualities?: number[]) => void;
+  onChange?: (metrics?: string [], videos?: string [], qualities?: number[]) => void;
 }
 
 export interface Option {
@@ -67,19 +67,11 @@ export class JobSelectorComponent extends React.Component<JobSelectorProps, {
   getJob(id: string): Job {
     return this.props.jobs.find(job => job.id === id);
   }
-  onChangeJob(index, option) {
-    let jobs = this.state.jobs;
-    jobs[index] = option;
-    this.setState({jobs} as any, () => {
-      this.onChange();
-    });
-  }
   onChange() {
     if (!this.props.onChange) {
       return;
     }
     this.props.onChange(
-      this.state.jobs.map(job => job ? this.getJob(job.value) : null),
       this.state.metrics.map(option => option.value),
       this.state.videos.map(option => option.value),
       this.state.qualities.map(option => Number(option.value))
@@ -100,16 +92,6 @@ export class JobSelectorComponent extends React.Component<JobSelectorProps, {
       this.onChange();
     });
   }
-  getJobAtIndex(index: number): Job {
-    if (index < this.state.jobs.length && this.state.jobs[index]) {
-      return this.getJob(this.state.jobs[index].value);
-    }
-    return null;
-  }
-  jobAtIndexIs(index: number, id: string): boolean {
-    let job = this.getJobAtIndex(index);
-    return job && job.id === id;
-  }
   render() {
     console.debug("Rendering Job Selector");
     let allJobs = [];
@@ -118,33 +100,15 @@ export class JobSelectorComponent extends React.Component<JobSelectorProps, {
       return { value: name, label: name };
     });
     let jobs = this.props.jobs;
-    let jobAOptions = jobs.map(job => {
-      return { value: job.id, label: job.id, disabled: this.jobAtIndexIs(1, job.id) };
-    });
-    let jobBOptions = jobs.map(job => {
-      return { value: job.id, label: job.id, disabled: this.jobAtIndexIs(0, job.id) };
-    });
-    let jobA = this.getJobAtIndex(0);
-    let jobB = this.getJobAtIndex(1);
-    let videos = (jobA && jobA.report) ? Object.keys(jobA.report).map(name => {
+    let videos = Object.keys(jobs[0].report).map(name => {
       return { value: name, label: name };
-    }) : null;
-    let qualities = (jobA && jobA.report) ? jobA.report["Total"].map(row => {
+    });
+    let qualities = jobs[0].report["Total"].map(row => {
       return { value: row[0], label: row[0] };
-    }) : null;
+    });
     return <div>
       <div className="row">
         <div className="col-xs-12">
-          <div className="row">
-            <div className="col-xs-6" style={{ paddingBottom: 8 }}>
-              <div className="selectTitle">Compare</div>
-              <Select name="jobA" value={this.state.jobs[0]} options={jobAOptions} onChange={this.onChangeJob.bind(this, 0)}/>
-            </div>
-            <div className="col-xs-6">
-              <div className="selectTitle">With</div>
-              <Select name="jobB" value={this.state.jobs[1]} options={jobBOptions} onChange={this.onChangeJob.bind(this, 1)}/>
-            </div>
-          </div>
           <div className="row">
             <div className="col-xs-4">
               <div className="selectTitle">Metrics</div>

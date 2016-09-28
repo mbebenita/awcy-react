@@ -9,6 +9,7 @@ let Select = require('react-select');
 declare var tinycolor: any;
 
 interface JobListItemProps {
+  store: AppStore,
   job: Job;
   detailed?: boolean;
   onCancel?: (job: Job) => void;
@@ -78,10 +79,14 @@ export class JobListItemComponent extends React.Component<JobListItemProps, {
     let select = null;
     if (job.status == JobStatus.Pending || job.status == JobStatus.Running) {
       if (this.props.onCancel) {
-        cancel = <Button bsStyle="danger" onClick={this.onCancelClick.bind(this)}>Cancel</Button>;
+        cancel = <Button bsStyle="danger" disabled={!this.props.store.isLoggedIn} onClick={this.onCancelClick.bind(this)}>Cancel</Button>;
       }
     } else {
       select = <Button onClick={this.onToggleSelectionClick.bind(this)}>{job.selected ? "Deselect " + job.selectedName : "Select"}</Button>
+    }
+    let hasCompleted = null;
+    if (!job.completed && job.status !== JobStatus.Running) {
+      hasCompleted = <div className="jobWarning">Job failed.</div>
     }
     let hasAnalyzer = null;
     if (this.state.hasAnalyzer !== undefined) {
@@ -97,7 +102,7 @@ export class JobListItemComponent extends React.Component<JobListItemProps, {
     }
     let date = job.date ? `${job.date.toLocaleDateString()} ${job.date.toLocaleTimeString()} (${timeSince(job.date)})`: "";
     let borderRight = job.selected ? "4px solid " + job.color : undefined;
-    let backgroundColor = (job.buildOptions === "" && job.extraOptions === "") ? "#D3E7ED": "";
+    let backgroundColor = (job.buildOptions === "" && job.extraOptions === "") ? "#FBFBFB": "";
     if (job.selected) {
       backgroundColor = "#F0F0F0";
     }
@@ -122,6 +127,7 @@ export class JobListItemComponent extends React.Component<JobListItemProps, {
           <Button onClick={this.abortCancel.bind(this)}>No</Button>
         </Modal.Footer>
       </Modal>
+      {hasCompleted}
       {hasAnalyzer}
       {hasReport}
       {progress}
@@ -148,19 +154,21 @@ export class SubmitJobFormComponent extends React.Component<{
   onCancel: () => void;
 }, {
     job: Job;
-    set: Option;
-    codec: Option;
+    set: string;
+    codec: string;
   }> {
   constructor() {
     super();
     this.state = {
       job: null,
-      set: null,
-      codec: null
-    };
+      set: "objective-1-fast",
+      codec: "av1"
+    } as any;
   }
   componentWillMount() {
-    this.setState({ job: new Job() } as any);
+    let job = new Job();
+    job.saveEncodedFiles = true;
+    this.setState({ job } as any);
   }
   getValidationState(name?: string): "success" | "warning" | "error" {
     let job = this.state.job;
@@ -220,8 +228,9 @@ export class SubmitJobFormComponent extends React.Component<{
   }
   onCreate() {
     let job = this.state.job;
-    job.task = this.state.set.value;
-    job.codec = this.state.codec.value;
+    job.date = new Date();
+    job.task = this.state.set;
+    job.codec = this.state.codec;
     this.props.onCreate(job);
   }
   onCancel() {
@@ -315,13 +324,15 @@ export class SubmitJobFormComponent extends React.Component<{
 }
 
 interface JobListProps {
-  store: Jobs;
+  store: AppStore;
+  jobs: Jobs;
   jobStatusFilter?: JobStatus;
   detailed?: boolean;
   listHeight: number
 }
 
 export class JobListComponent extends React.Component<JobListProps, {
+    store: AppStore,
     jobs: Job[];
     jobStatusFilter: JobStatus;
     showSubmitJobForm: boolean;
@@ -340,8 +351,8 @@ export class JobListComponent extends React.Component<JobListProps, {
   }
 
   componentDidMount() {
-    this.props.store.onChange.attach(() => {
-      this.setState({ jobs: this.props.store.jobs } as any);
+    this.props.jobs.onChange.attach(() => {
+      this.setState({ jobs: this.props.jobs.jobs } as any);
     });
   }
 
@@ -405,9 +416,10 @@ export class JobListComponent extends React.Component<JobListProps, {
     authorOptions = uniqueAuthors.map(author => {
       return { value: author, label: author };
     });
+
     return <div>
       <div style={{ width: "100%", paddingBottom: "10px" }}>
-        <Button bsStyle="success" onClick={this.onSubmitNewJobClick.bind(this)}>Submit New Job</Button>
+        <Button bsStyle="success" disabled={!this.props.store.isLoggedIn} onClick={this.onSubmitNewJobClick.bind(this)}>Submit New Job</Button>
       </div>
       <div style={{ display: "table", width: "100%" }}>
         <div style={{ display: "table-row" }}>
@@ -447,7 +459,7 @@ export class JobListComponent extends React.Component<JobListProps, {
             }
             return true;
           }).map((job: Job) => {
-            return <JobListItemComponent detailed={this.props.detailed} key={job.id} job={job} onCancel={this.onCancelJob.bind(this)}></JobListItemComponent>
+            return <JobListItemComponent store={this.props.store} detailed={this.props.detailed} key={job.id} job={job} onCancel={this.onCancelJob.bind(this)}></JobListItemComponent>
           })}
         </ListGroup>
       </div>

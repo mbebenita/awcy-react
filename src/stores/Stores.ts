@@ -37,6 +37,27 @@ function zip<T>(a: string[], b: T[]): { [index: string]: T } {
   return o;
 }
 
+export function postXHR(path: string, o: any): Promise<boolean> {
+  return new Promise((resolve, reject) => {
+    let xhr = new XMLHttpRequest();
+    let pairs = [];
+    for(let name in o) {
+      if (o[name]) {
+        pairs.push(encodeURIComponent(name) + '=' + encodeURIComponent(o[name]));
+      }
+    }
+    let data = pairs.join('&').replace(/%20/g, '+');
+    xhr.open('POST', path);
+    xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+    xhr.addEventListener('load', function(event) {
+      resolve(xhr.status === 200);
+    });
+    xhr.addEventListener('error', function(event) {
+      reject(false);
+    });
+    xhr.send(data);
+  });
+}
 export function loadXHR(path: string, next: (json: any) => void, type = "json") {
   let xhr = new XMLHttpRequest();
   let self = this;
@@ -221,6 +242,7 @@ export class Job {
   saveEncodedFiles: boolean = false;
   status: JobStatus = JobStatus.None;
   date: Date;
+  completed: boolean;
   log: string = "";
   progress: JobProgress = new JobProgress(0, 0);
   selected: boolean = false;
@@ -395,16 +417,16 @@ export class AppStore {
   jobs: Jobs;
   selectedJobs: Jobs;
   onChange = new AsyncEvent<string>();
-  runningJob: Job;
-  onRunningJobChange = new AsyncEvent<string>();
   aws: any;
   onAWSChange = new AsyncEvent<string>();
   analyzedFiles = [];
   onAnalyzedFilesChanged = new AsyncEvent<string>();
+  isLoggedIn: boolean = false;
+  password: string = "";
+  onLoggedInStateChanged = new AsyncEvent<string>();
   constructor() {
     this.jobs = new Jobs();
     this.selectedJobs = new Jobs();
-    this.runningJob = null;
     this.aws = {};
     AppDispatcher.register((action) => {
       if (action instanceof SelectJob) {
@@ -422,18 +444,55 @@ export class AppStore {
         job.color = "";
         job.onChange.post("job-changed");
         this.selectedJobs.removeJob(job);
+      } else if (action instanceof SubmitJob) {
+        let job = action.job;
+        this.submitJob(this.password, job);
       } else if (action instanceof CancelJob) {
         let job = action.job;
         this.jobs.removeJob(job);
-        if (this.runningJob === job) {
-          this.runningJob = null
-        }
-        this.onRunningJobChange.post("job-cancelled");
       } else if (action instanceof AnalyzeFile) {
         this.analyzedFiles.push({job: null, decoderUrl: "http://aomanalyzer.org/bin/decoder.js", videoUrl: "crosswalk_30.ivf"})
         this.onAnalyzedFilesChanged.post("change");
       }
     });
+  }
+  login(password: string): Promise<boolean> {
+    return new Promise((resolve, reject) => {
+      this.password = password;
+      postXHR(baseUrl + "submit/check", {
+        key: password
+      }).then((result) => {
+        this.isLoggedIn = result;
+        this.onLoggedInStateChanged.post("changed");
+        resolve(result);
+        if (result) {
+          localStorage["password"] = password;
+        } else {
+          delete localStorage["password"];
+        }
+      }, () => {
+        this.isLoggedIn = false;
+        this.onLoggedInStateChanged.post("changed");
+        reject(false);
+      });
+    });
+  }
+  submitJob(key: string, job: Job) {
+    postXHR(baseUrl + "submit/job", {
+      key: key,
+      run_id: job.id,
+      commit: job.commit,
+      codec: job.codec,
+      task: job.task,
+      extra_options: job.extraOptions,
+      build_options: job.buildOptions,
+      qualities: job.qualities,
+      nick: job.nick,
+      ab_compare: job.runABCompare,
+      save_encode: job.saveEncodedFiles
+    });
+    job.status = JobStatus.Running;
+    this.jobs.addJob(job);
   }
   load() {
     this.loadJobs().then(() => {
@@ -444,6 +503,11 @@ export class AppStore {
         this.loadStatus();
       }, 10000);
     });
+
+    if (localStorage["password"]) {
+      this.login(localStorage["password"]);
+    }
+
   }
   loadAWS() {
     loadXHR(baseUrl + "describeAutoScalingInstances", (json) => {
@@ -527,6 +591,7 @@ export class AppStore {
         json.forEach(o => {
           let job = Job.fromJSON(o.info);
           job.date = new Date(o.date);
+          job.completed = !o.failed;
           job.status = JobStatus.Completed;
           this.jobs.addJobInternal(job);
         });

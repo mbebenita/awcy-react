@@ -1,5 +1,5 @@
 import * as React from "react";
-import { Button, Panel } from "react-bootstrap";
+import { Button, Panel, Form, FormGroup, ControlLabel, FormControl } from "react-bootstrap";
 import { } from "react-bootstrap";
 import { AppStore, AppDispatcher, Jobs, Job, metricNames, AnalyzeFile } from "../stores/Stores";
 import { Analyzer } from "../analyzer";
@@ -326,5 +326,49 @@ export class ShareComponent extends React.Component<{
       return "job=" + encodeURIComponent(job.id);
     }).join("&");
     return <div><div>Sharing URL</div><a className="url" href={url}>{url}</a></div>
+  }
+}
+
+export class LoginComponent extends React.Component<{
+  store: AppStore;
+}, {
+  password: string;
+}> {
+  check: Promise<boolean>
+  constructor() {
+    super();
+    this.state = {
+      password: localStorage["password"] || ""
+    };
+
+  }
+  componentWillMount() {
+  }
+  onInputChange(e: any) {
+    this.setState({
+      password: e.target.value
+    } as any);
+    this.check = this.props.store.login(e.target.value);
+    this.check.then(
+      (result) => { this.forceUpdate(); },
+      () => { this.forceUpdate(); }
+    );
+  }
+  getValidationState(): "success" | "warning" | "error" {
+    let password = this.state.password;
+    if (password.length === 0) {
+      return "error";
+    }
+    return this.props.store.isLoggedIn ? "success" : "error";
+  }
+  render() {
+    return <Form>
+      <FormGroup validationState={this.getValidationState()}>
+        <ControlLabel>AWCY API Key</ControlLabel>
+        <FormControl type="text" placeholder=""
+          value={this.state.password} onChange={this.onInputChange.bind(this)} />
+        <FormControl.Feedback/>
+      </FormGroup>
+    </Form>
   }
 }

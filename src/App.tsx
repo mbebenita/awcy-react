@@ -13,7 +13,7 @@ import { JobLogComponent, AppStatusComponent } from "./components/Log"
 
 import { AppStore, Job, JobStatus, SelectJob, AppDispatcher } from "./stores/Stores"
 
-import { AnalyzerComponent, ShareComponent } from "./components/Widgets"
+import { AnalyzerComponent, ShareComponent, LoginComponent } from "./components/Widgets"
 
 export interface AppProps { }
 export interface AppState { }
@@ -61,12 +61,17 @@ export class App extends React.Component<AppProps, AppState> {
         <Tabs defaultActiveKey={1} animation={false} id="noanim-tab-example">
           <Tab eventKey={1} key="runs" title="Runs">
             <div style={{ padding: 10 }}>
-              <JobListComponent jobStatusFilter={JobStatus.All} store={this.store.jobs} listHeight={window.innerHeight - 200} />
+              <JobListComponent store={this.store} jobStatusFilter={JobStatus.All} jobs={this.store.jobs} listHeight={window.innerHeight - 200} />
             </div>
           </Tab>
           <Tab eventKey={2} key="share" title="Share">
             <div style={{ padding: 10 }}>
               <ShareComponent store={this.store} />
+            </div>
+          </Tab>
+          <Tab eventKey={3} key="login" title="Login">
+            <div style={{ padding: 10 }}>
+              <LoginComponent store={this.store}/>
             </div>
           </Tab>
         </Tabs>

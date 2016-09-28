@@ -37,11 +37,6 @@ export class AppStatusComponent extends React.Component<{
   }
   componentDidMount() {
     let store = this.props.store;
-    store.onRunningJobChange.attach(() => {
-      this.setState({
-        // runningJob: store.runningJob,
-      } as any);
-    });
     store.onAWSChange.attach(() => {
       this.setState({
         aws: store.aws
@@ -95,7 +90,7 @@ export class AppStatusComponent extends React.Component<{
 
     store.jobs.jobs.forEach(job => {
       if (job.status === JobStatus.Running) {
-        jobInfos.push(<Panel key={job.id} header="Running Job Info">
+        jobInfos.push(<Panel key={job.id}>
           <JobListItemComponent detailed job={job}/>
           <JobLogComponent job={job} />
         </Panel>);

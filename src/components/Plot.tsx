@@ -435,6 +435,9 @@ export class Plot<P extends PlotProps, S extends PlotState> extends React.Compon
   tickBarH = 20;
   margins = new Margins(10, 10, this.tickBarH, this.tickBarW);
 
+  xTicks = 10;
+  yTicks = 5;
+
   darkTheme = {
     backgroundColor: "#212121",
     gridLineColor: "#424242"
@@ -480,6 +483,7 @@ export class Plot<P extends PlotProps, S extends PlotState> extends React.Compon
     this.canvas.height = this.device.h;
     let ratio = this.device.h / this.device.w;
     this.ctx.setTransform(1, 0, 0, -1, 0, this.device.h);
+    this.xTicks = (this.device.w / this.ratio) / 100 | 0;
   }
   componentWillReceiveProps(nextProps: P, nextContext: any) {
     if (this.props.width != nextProps.width || this.props.height != nextProps.height) {
@@ -583,12 +587,12 @@ export class Plot<P extends PlotProps, S extends PlotState> extends React.Compon
     let b = Point.createEmpty();
     let xDomain = this.xScale.domain();
     let yDomain = this.yScale.domain();
-    this.xScale.ticks(10).forEach(tick => {
+    this.xScale.ticks(this.xTicks).forEach(tick => {
       a.setElements(tick, yDomain[0]);
       b.setElements(tick, yDomain[1]);
       this.drawLine(a, b);
     });
-    this.yScale.ticks(5).forEach(tick => {
+    this.yScale.ticks(this.yTicks).forEach(tick => {
       a.setElements(xDomain[0], tick);
       b.setElements(xDomain[1], tick);
       this.drawLine(a, b);
@@ -604,8 +608,8 @@ export class Plot<P extends PlotProps, S extends PlotState> extends React.Compon
     let xDomain = this.xScale.domain();
     let yDomain = this.yScale.domain();
 
-    let ticks = this.xScale.ticks(10);
-    let tickFormat = this.xScale.tickFormat(10, ".2");
+    let ticks = this.xScale.ticks(this.xTicks);
+    let tickFormat = this.xScale.tickFormat(this.xTicks, ".2");
     let textPadding = this.textPadding * this.ratio;
 
     ticks.forEach((tick, i) => {
@@ -614,8 +618,8 @@ export class Plot<P extends PlotProps, S extends PlotState> extends React.Compon
       this.drawDeviceText(a, tickFormat(tick), 0, -textPadding, "center", "top");
     });
 
-    ticks = this.yScale.ticks(5);
-    tickFormat = this.yScale.tickFormat(10, ".2");
+    ticks = this.yScale.ticks(this.yTicks);
+    tickFormat = this.yScale.tickFormat(this.yTicks, ".2");
 
     ticks.forEach((tick, i) => {
       a.setElements(xDomain[0], tick);
@@ -644,7 +648,6 @@ export class Plot<P extends PlotProps, S extends PlotState> extends React.Compon
 
 export interface ScatterPlotSeries {
   name: string;
-  label: string;
   color: string;
   values: number[][];
   xAxis: PlotAxis;
@@ -750,7 +753,7 @@ export class ScatterPlot<P extends ScatterPlotProps, S extends ScatterPlotState>
       c.fillStyle = c.strokeStyle = s.color;
       c.fillRect(offsetX, offsetY + j * (h + p), w, h);
       c.fillStyle = "#000000";
-      let text = s.name + " " + s.label;
+      let text = s.name;
       if (c.measureText(text).width > this.device.w) {
         text = s.name;
       }

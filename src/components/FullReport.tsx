@@ -123,7 +123,7 @@ export class FullReportComponent extends React.Component<{
       });
     }
     let tabs = jobs.map((job, i) => {
-      return <Tab eventKey={i} key={job.id} title={job.id}>
+      return <Tab eventKey={i} key={job.id} title={job.selectedName}>
         <div style={{paddingTop: 10}}>
           <VideoReportComponent name={video} job={job} highlightColumns={metrics} filterQualities={qualities} />
         </div>

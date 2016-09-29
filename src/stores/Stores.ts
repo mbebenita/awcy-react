@@ -442,11 +442,15 @@ let colorPool = [
   '#a6cee3', '#1f78b4', '#b2df8a', '#33a02c', '#fb9a99', '#e31a1c', '#fdbf6f', '#ff7f00', '#cab2d6', '#6a3d9a', '#b15928'
 ];
 
-function getColorForString(s: string): string {
+export function hashString(s: string) {
   let t = 0;
   for (let i = 0; i < s.length; i++) {
     t += s.charCodeAt(i);
   }
+  return t;
+}
+function getColorForString(s: string): string {
+  let t = hashString(s);
   return colorPool[t % colorPool.length];
 }
 
@@ -541,8 +545,9 @@ export class AppStore {
   load() {
     this.loadJobs().then(() => {
       this.loadAWS();
-      this.loadSets();
-      this.loadStatus();
+      Promise.all([this.loadSets(), this.loadStatus()]).then(() => {
+        this.processUrlParameters();
+      });
       setInterval(() => {
         this.loadStatus();
       }, 10000);
@@ -642,7 +647,6 @@ export class AppStore {
         });
         this.jobs.onChange.post("job-added");
         resolve(true);
-        this.processUrlParameters();
       });
     });
   }

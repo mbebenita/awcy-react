@@ -20,6 +20,7 @@ let Select = require('react-select');
 export class FullReportComponent extends React.Component<{
   jobs: Jobs;
 }, {
+    jobs: Job [];
     metrics: string[],
     videos: string[],
     qualities: number[],
@@ -30,6 +31,7 @@ export class FullReportComponent extends React.Component<{
   constructor() {
     super();
     this.state = {
+      jobs: [],
       fit: true,
       log: true,
       stack: false,
@@ -45,17 +47,18 @@ export class FullReportComponent extends React.Component<{
     this.load();
   }
   load() {
-    Promise.all(this.props.jobs.jobs.map(job => {
+    let jobs = this.props.jobs.jobs.filter(job => job.completed);
+    Promise.all(jobs.map(job => {
       return job.loadReport();
     })).catch(() => {
-      this.forceUpdate();
+      this.setState({jobs} as any);
     }).then(data => {
-      this.forceUpdate();
+      this.setState({jobs} as any);
     });
   }
   getSeries(name: string, metric: string): ScatterPlotSeries[] {
     let series = [];
-    let jobs = this.props.jobs.jobs;
+    let jobs = this.state.jobs;
     let reportFieldIndex = metricNameToReportFieldIndex(metric);
     jobs.forEach(job => {
       let values = [];
@@ -95,7 +98,7 @@ export class FullReportComponent extends React.Component<{
     this.setState({ stack: !this.state.stack } as any);
   }
   renderVideoReport(video: string, stack: boolean) {
-    let jobs = this.props.jobs.jobs;
+    let jobs = this.state.jobs;
     let metrics = this.state.metrics;
     let qualities = this.state.qualities;
     let headers = metrics.map(name =>
@@ -153,7 +156,7 @@ export class FullReportComponent extends React.Component<{
   }
   render() {
     console.debug("Rendering Full Report");
-    let jobs = this.props.jobs.jobs.filter(job => job.completed);
+    let jobs = this.state.jobs;
     if (jobs.length == 0) {
       return <div>
         <p>No completed runs selected.</p>
@@ -161,14 +164,10 @@ export class FullReportComponent extends React.Component<{
     }
 
     let selectedJobs = [];
-    if (true) {
-      jobs.forEach(job => {
-        let log = job.completed ? null : <JobLogComponent job={job} />
-        selectedJobs.push(<Panel key={job.id}>
-          <JobComponent detailed job={job}/>
-        </Panel>);
-      });
-    }
+    jobs.forEach(job => {
+      let log = job.completed ? null : <JobLogComponent job={job} />
+      selectedJobs.push(<JobComponent key={job.id} job={job}/>);
+    });
 
     let tables = [];
     let job = jobs[0];
@@ -186,12 +185,12 @@ export class FullReportComponent extends React.Component<{
     }
     let report = <BDRateReportComponent a={jobs[0]} b={jobs[1]}/>
     return <div style={{ width: "980px" }}>
-      <div>
+      <Panel>
         {selectedJobs}
-      </div>
-      <div>
-        <JobSelectorComponent metrics={this.state.metrics} jobs={this.props.jobs.jobs} onChange={this.onJobSelectorChange.bind(this)} />
-      </div>
+      </Panel>
+      <Panel>
+        <JobSelectorComponent metrics={this.state.metrics} jobs={this.state.jobs} onChange={this.onJobSelectorChange.bind(this)} />
+      </Panel>
       <div style={{ paddingBottom: 8, paddingTop: 4 }}>
         <Button active={this.state.fit} onClick={this.onFitClick.bind(this)}>Fit Charts</Button>{' '}
         <Button active={this.state.log} onClick={this.onLogClick.bind(this)}>Logarithmic</Button>{' '}

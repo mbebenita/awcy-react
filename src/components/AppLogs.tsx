@@ -23,7 +23,7 @@ export class AppLogsComponent extends React.Component<void, void> {
       </div>);
     });
     if (logs.length == 0) {
-      logs.push(<div>
+      logs.push(<div key="noruns">
         No runs selected.
       </div>);
     }

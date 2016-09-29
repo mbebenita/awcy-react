@@ -1,6 +1,6 @@
 import * as React from "react";
 import { Modal, Panel, Button, ProgressBar, ButtonToolbar, DropdownButton } from "react-bootstrap";
-import { appStore, AppDispatcher, SelectJob, DeselectJob, CancelJob, SubmitJob, Jobs, Job, JobStatus, JobProgress, timeSince, minutesSince } from "../stores/Stores";
+import { hashString, appStore, AppDispatcher, SelectJob, DeselectJob, CancelJob, SubmitJob, Jobs, Job, JobStatus, JobProgress, timeSince, minutesSince } from "../stores/Stores";
 
 interface JobProps {
   job: Job;
@@ -13,6 +13,7 @@ export class JobComponent extends React.Component<JobProps, {
     showCancelModal: boolean;
     hasReport: undefined | boolean;
     hasAnalyzer: undefined | boolean;
+    detailed: boolean;
   }> {
 
   onChangeHandler: any;
@@ -22,7 +23,8 @@ export class JobComponent extends React.Component<JobProps, {
       job: props.job,
       showCancelModal: false,
       hasReport: undefined,
-      hasAnalyzer: undefined
+      hasAnalyzer: undefined,
+      detailed: props.detailed
     };
     this.onChangeHandler = () => {
       this.forceUpdate();
@@ -59,6 +61,9 @@ export class JobComponent extends React.Component<JobProps, {
     this.abortCancel();
     this.props.onCancel(this.state.job);
   }
+  toggleDetail() {
+    this.setState({detailed: !this.state.detailed} as any);
+  }
   render() {
     let job = this.props.job;
     let progress = null;
@@ -77,7 +82,6 @@ export class JobComponent extends React.Component<JobProps, {
     } else if (job.status === JobStatus.Pending) {
       progress = <ProgressBar now={0} />
     }
-    let details = null;
     let cancel = null;
     let select = null;
     if (job.status == JobStatus.Pending || job.status == JobStatus.Running) {
@@ -103,21 +107,37 @@ export class JobComponent extends React.Component<JobProps, {
         hasReport = <div className="jobWarning">Report failed to build or is not yet available.</div>
       }
     }
-    let date = job.date ? `${job.date.toLocaleDateString()} ${job.date.toLocaleTimeString()} (${timeSince(job.date)})`: "";
+    // let date = job.date ? `${job.date.toLocaleDateString()} ${job.date.toLocaleTimeString()} (${timeSince(job.date)})`: "";
+    let date = job.date ? `${timeSince(job.date)}`: "";
+
     let borderRight = job.selected ? "4px solid " + job.color : undefined;
+    let borderLeft = borderRight;
     let backgroundColor = (job.buildOptions === "" && job.extraOptions === "") ? "#FBFBFB": "";
     if (job.selected) {
       backgroundColor = "#F0F0F0";
     }
-    let extra = [];
-    if (job.buildOptions) extra.push("Build: " + job.buildOptions);
-    if (job.extraOptions) extra.push("Extra: " + job.extraOptions);
-    if (this.props.detailed) {
-      extra.push("Qualities: " + job.qualities);
-      extra.push("Run A/B Compare: " + job.runABCompare);
-      extra.push("Save Encoded Files: " + job.saveEncodedFiles);
+
+    function keyValue(key, value) {
+      return <div key={key}><span className="tinyJobValue">{key}: </span><span className="tinyGrayJobValue">{value}</span></div>
     }
-    return <div className="list-group-item" style={{ borderRight, backgroundColor}}>
+
+    let details = [];
+    if (this.state.detailed) {
+      if (job.buildOptions) details.push(keyValue("Build", job.buildOptions));
+      if (job.extraOptions) details.push(keyValue("Extra", job.extraOptions));
+      details.push(keyValue("Commit", job.commit));
+      details.push(keyValue("Task", job.task));
+      details.push(keyValue("Qualities", job.qualities));
+      details.push(keyValue("Run A/B Compare", job.runABCompare));
+      details.push(keyValue("Save Encoded Files", job.saveEncodedFiles));
+    }
+    let award = null;
+    if (job.nick === "codeview") {
+      let src = ["img/bottle.png", "img/mug.png", "img/beer.png"][hashString(job.commit) % 3];
+      award = <div style={{paddingRight: "10px", display: "flex", justifyContent: "center"}}><img src={src} style={{height: 32, padding: 2}}/></div>
+    }
+
+    return <div className="list-group-item" style={{ borderRight, borderLeft, backgroundColor}}>
       <Modal show={this.state.showCancelModal} onHide={this.abortCancel.bind(this)}>
         <Modal.Header closeButton>
           <Modal.Title>Cancel job?</Modal.Title>
@@ -130,24 +150,26 @@ export class JobComponent extends React.Component<JobProps, {
           <Button onClick={this.abortCancel.bind(this)}>No</Button>
         </Modal.Footer>
       </Modal>
+      {/*
       {hasCompleted}
       {hasAnalyzer}
       {hasReport}
       {progress}
-      <div className="jobValue">{job.id}</div>
-      <div className="tinyJobValue">
-        {job.nick}, {job.codec}, {job.commit}
+      */}
+      <div style={{display: "flex", flexDirection: "row", justifyContent: "space-between"}}>
+        {award}
+        <div style={{paddingRight: "4px", flex: "1"}}>
+          <div className="jobValue">{job.id} <Button className="expander" onClick={this.toggleDetail.bind(this)}>...</Button></div>
+          <div className="tinyJobValue">
+            {job.nick} <span className="tinyGrayJobValue">submitted {date}</span>
+          </div>
+          {details}
+        </div>
+        <div>
+          {cancel}
+          {select}
+        </div>
       </div>
-      <div className="tinyJobValue">
-        {date}
-      </div>
-      <div className="tinyJobValue">
-        {extra.join(", ")}
-      </div>
-      <ButtonToolbar style={{ paddingTop: 8 }}>
-        {cancel}
-        {select}
-      </ButtonToolbar>
-    </div>;
+    </div>
   }
 }

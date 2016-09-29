@@ -97,7 +97,7 @@ export class FullReportComponent extends React.Component<{
   onStackClick() {
     this.setState({ stack: !this.state.stack } as any);
   }
-  renderVideoReport(video: string, stack: boolean) {
+  renderVideoReport(video: string, stack: boolean, showTabs = true) {
     let jobs = this.state.jobs;
     let metrics = this.state.metrics;
     let qualities = this.state.qualities;
@@ -128,15 +128,21 @@ export class FullReportComponent extends React.Component<{
         </tr>);
       });
     }
-    let tabs = jobs.map((job, i) => {
-      return <Tab eventKey={i} key={job.id} title={job.selectedName}>
-        <div style={{paddingTop: 10}}>
-          <VideoReportComponent name={video} job={job} highlightColumns={metrics} filterQualities={qualities} />
-        </div>
-      </Tab>
-    });
+    let tabs = null;
+    if (showTabs) {
+      tabs = <Tabs animation={false} id="noanim-tab-example">
+        {jobs.map((job, i) => {
+          return <Tab eventKey={i} key={job.id} title={job.selectedName}>
+            <div style={{paddingTop: 10}}>
+              <VideoReportComponent name={video} job={job} highlightColumns={metrics} filterQualities={qualities} />
+            </div>
+          </Tab>
+        })}
+      </Tabs>
+    }
+
     return <div key={video}>
-      <Panel header={video}>
+      <Panel className="videoReport" header={video}>
         <Table condensed bordered={false}>
           <thead>
             <tr>
@@ -147,9 +153,7 @@ export class FullReportComponent extends React.Component<{
             {rows}
           </tbody>
         </Table>
-        <Tabs animation={false} id="noanim-tab-example">
-          {tabs}
-        </Tabs>
+        {tabs}
       </Panel>
     </div>
     // <AnalyzerVideoSelectorComponent video={video} jobs={jobs}/>
@@ -191,13 +195,13 @@ export class FullReportComponent extends React.Component<{
       <Panel>
         <JobSelectorComponent metrics={this.state.metrics} jobs={this.state.jobs} onChange={this.onJobSelectorChange.bind(this)} />
       </Panel>
-      <div style={{ paddingBottom: 8, paddingTop: 4 }}>
+      <div style={{ }}>
         <Button active={this.state.fit} onClick={this.onFitClick.bind(this)}>Fit Charts</Button>{' '}
         <Button active={this.state.log} onClick={this.onLogClick.bind(this)}>Logarithmic</Button>{' '}
         <Button active={this.state.stack} onClick={this.onStackClick.bind(this)}>Enlarge Charts</Button>
       </div>
       <div style={{ paddingTop: 8 }}>
-        {this.renderVideoReport("Total", this.state.stack)}
+        {this.renderVideoReport("Total", this.state.stack, false)}
         {report}
         {tables}
       </div>

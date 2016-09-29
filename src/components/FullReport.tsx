@@ -8,7 +8,7 @@ import { JobSelectorComponent } from "./Widgets";
 import { Promise } from "es6-promise";
 import { AnalyzerVideoSelectorComponent, AnalyzerComponent } from "./Widgets";
 
-import { JobListItemComponent } from "./Jobs";
+import { JobComponent } from "./Job";
 import { JobLogComponent } from "./JobLog";
 
 import { Jobs, Job, JobStatus, loadXHR, ReportField, reportFieldNames, metricNames, metricNameToReportFieldIndex } from "../stores/Stores";
@@ -164,7 +164,7 @@ export class FullReportComponent extends React.Component<{
     jobs.forEach(job => {
       if (!job.completed) {
         failedJobInfos.push(<Panel key={job.id}>
-          <JobListItemComponent detailed job={job}/>
+          <JobComponent detailed job={job}/>
           <JobLogComponent job={job} />
         </Panel>);
       }

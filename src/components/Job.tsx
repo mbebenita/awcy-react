@@ -117,7 +117,7 @@ export class JobComponent extends React.Component<JobProps, {
       extra.push("Run A/B Compare: " + job.runABCompare);
       extra.push("Save Encoded Files: " + job.saveEncodedFiles);
     }
-    return <div className="job" style={{ borderRight, backgroundColor}}>
+    return <div className="list-group-item" style={{ borderRight, backgroundColor}}>
       <Modal show={this.state.showCancelModal} onHide={this.abortCancel.bind(this)}>
         <Modal.Header closeButton>
           <Modal.Title>Cancel job?</Modal.Title>

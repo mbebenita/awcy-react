@@ -315,7 +315,7 @@ export class ShareComponent extends React.Component<void, void> {
   }
   render() {
     let url = location.protocol + '//' + location.host + location.pathname + "?";
-    url += appStore.selectedJobs.jobs.map(job => {
+    url += appStore.jobs.jobs.filter(job => job.selected).map(job => {
       return "job=" + encodeURIComponent(job.id);
     }).join("&");
     return <div><div>Sharing URL</div><a className="url" href={url}>{url}</a></div>

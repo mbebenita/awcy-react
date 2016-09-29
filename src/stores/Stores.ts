@@ -583,6 +583,7 @@ export class AppStore {
         job.loadLog(true);
         job.onChange.post("updated status");
       });
+      this.jobs.onChange.post("updated status");
     });
   }
   loadSets(): Promise<boolean> {

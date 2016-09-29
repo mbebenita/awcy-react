@@ -20,7 +20,6 @@ interface JobsProps {
 }
 
 export class JobsComponent extends React.Component<JobsProps, {
-    jobs: Job[];
     jobStatusFilter: JobStatus;
     showSubmitJobForm: boolean;
     set: Option;
@@ -31,7 +30,6 @@ export class JobsComponent extends React.Component<JobsProps, {
   constructor(props: JobsProps) {
     super();
     this.state = {
-      jobs: [],
       jobStatusFilter: props.jobStatusFilter,
       showSubmitJobForm: false,
     } as any;
@@ -39,7 +37,7 @@ export class JobsComponent extends React.Component<JobsProps, {
 
   componentDidMount() {
     this.props.jobs.onChange.attach(() => {
-      this.setState({ jobs: this.props.jobs.jobs } as any);
+      this.forceUpdate();
     });
   }
 
@@ -67,7 +65,7 @@ export class JobsComponent extends React.Component<JobsProps, {
     this.setState({ showSubmitJobForm: true } as any);
   }
   makeFilters() {
-    let jobs = this.state.jobs;
+    let jobs = this.props.jobs.jobs;
     let codecOptions = [];
     for (let key in Job.codecs) {
       let name = Job.codecs[key];
@@ -121,7 +119,7 @@ export class JobsComponent extends React.Component<JobsProps, {
     </div>
   }
   makeJobList() {
-    let jobs = this.state.jobs;
+    let jobs = this.props.jobs.jobs;
     let filters = this.props.showFilters ? this.makeFilters() : null;
     return <div>
       <div style={{ width: "100%", paddingBottom: "10px" }}>

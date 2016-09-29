@@ -26,8 +26,8 @@ import { AnalyzerComponent } from "../components/Widgets";
 import { Promise } from "es6-promise"
 import { AsyncEvent } from 'ts-events';
 
-let baseUrl = "https://arewecompressedyet.com/";
-// let baseUrl = "https://beta.arewecompressedyet.com/";
+// let baseUrl = "https://arewecompressedyet.com/";
+let baseUrl = "https://beta.arewecompressedyet.com/";
 
 function zip<T>(a: string[], b: T[]): { [index: string]: T } {
   let o = {};
@@ -616,3 +616,5 @@ export class AppStore {
     });
   }
 }
+
+export let appStore = new AppStore();

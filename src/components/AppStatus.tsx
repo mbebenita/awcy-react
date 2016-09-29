@@ -1,34 +1,10 @@
 import * as React from "react";
-import { ListGroup, ListGroupItem } from "react-bootstrap";
-import { Table, Popover, OverlayTrigger, Navbar, Checkbox, Form, FormGroup, ControlLabel, FormControl, HelpBlock, Modal, Panel, Label, Col, Row, Button, ProgressBar, Badge, ButtonToolbar, DropdownButton, MenuItem } from "react-bootstrap";
-import { Job, Jobs, AppStore, timeSince, daysSince, JobStatus} from "../stores/Stores";
+import { Table, Panel } from "react-bootstrap";
+import { appStore, Job, Jobs, timeSince, daysSince, JobStatus} from "../stores/Stores";
 import { JobListItemComponent } from "./Jobs";
+import { JobLogComponent } from "./JobLog";
 
-export class JobLogComponent extends React.Component<{
-  job: Job
-}, {
-    text: string
-  }> {
-  constructor() {
-    super();
-    this.state = { text: "" };
-  }
-  componentDidMount() {
-    let job = this.props.job;
-    if (job) {
-      job.onChange.attach(() => {
-        this.setState({ text: job.log } as any);
-      });
-    }
-  }
-  render() {
-    return <pre className="log" style={{ height: "256px", overflow: "scroll" }}>{this.state.text}</pre>;
-  }
-}
-
-export class AppStatusComponent extends React.Component<{
-  store: AppStore
-}, {
+export class AppStatusComponent extends React.Component<void, {
     aws: any;
   }> {
   constructor() {
@@ -36,10 +12,9 @@ export class AppStatusComponent extends React.Component<{
     this.state = {} as any;
   }
   componentDidMount() {
-    let store = this.props.store;
-    store.onAWSChange.attach(() => {
+    appStore.onAWSChange.attach(() => {
       this.setState({
-        aws: store.aws
+        aws: appStore.aws
       } as any);
     });
   }
@@ -86,12 +61,10 @@ export class AppStatusComponent extends React.Component<{
     let log = null;
 
     let jobInfos = [];
-    let store = this.props.store;
-
-    store.jobs.jobs.forEach(job => {
+    appStore.jobs.jobs.forEach(job => {
       if (job.status === JobStatus.Running) {
         jobInfos.push(<Panel key={job.id}>
-          <JobListItemComponent store={store} detailed job={job}/>
+          <JobListItemComponent detailed job={job}/>
           <JobLogComponent job={job} />
         </Panel>);
       }
@@ -99,7 +72,7 @@ export class AppStatusComponent extends React.Component<{
 
     let jobs = {};
     let totalJobCount = 0;
-    store.jobs.jobs.forEach(job => {
+    appStore.jobs.jobs.forEach(job => {
       if (job.date && daysSince(job.date) > 14) {
         return;
       }
@@ -126,7 +99,6 @@ export class AppStatusComponent extends React.Component<{
         })}
       </Panel>);
     }
-
     return <div style={{height: "3000px"}}>
       {jobInfos}
       <Panel header={"AWS Status " + status}>

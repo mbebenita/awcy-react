@@ -1,7 +1,7 @@
 import * as React from "react";
 import { ListGroup, ListGroupItem } from "react-bootstrap";
 import { Popover, OverlayTrigger, Navbar, Checkbox, Form, FormGroup, ControlLabel, FormControl, HelpBlock, Modal, Panel, Label, Col, Row, Button, ProgressBar, Badge, ButtonToolbar, DropdownButton, MenuItem } from "react-bootstrap";
-import { AppDispatcher, Action, SelectJob, DeselectJob, CancelJob, SubmitJob , AppStore, Jobs, Job, JobStatus, JobProgress, timeSince, minutesSince } from "../stores/Stores";
+import { appStore, AppDispatcher, Action, SelectJob, DeselectJob, CancelJob, SubmitJob, Jobs, Job, JobStatus, JobProgress, timeSince, minutesSince } from "../stores/Stores";
 import { Option } from "./Widgets"
 declare var require: any;
 let Select = require('react-select');
@@ -9,7 +9,6 @@ let Select = require('react-select');
 declare var tinycolor: any;
 
 interface JobListItemProps {
-  store: AppStore,
   job: Job;
   detailed?: boolean;
   onCancel?: (job: Job) => void;
@@ -84,7 +83,7 @@ export class JobListItemComponent extends React.Component<JobListItemProps, {
     let select = null;
     if (job.status == JobStatus.Pending || job.status == JobStatus.Running) {
       if (this.props.onCancel) {
-        cancel = <Button bsStyle="danger" disabled={!this.props.store.isLoggedIn} onClick={this.onCancelClick.bind(this)}>Cancel</Button>;
+        cancel = <Button bsStyle="danger" disabled={!appStore.isLoggedIn} onClick={this.onCancelClick.bind(this)}>Cancel</Button>;
       }
     } else {
       select = <Button onClick={this.onToggleSelectionClick.bind(this)}>{job.selected ? "Deselect " + job.selectedName : "Select"}</Button>
@@ -329,7 +328,6 @@ export class SubmitJobFormComponent extends React.Component<{
 }
 
 interface JobListProps {
-  store: AppStore;
   jobs: Jobs;
   jobStatusFilter?: JobStatus;
   detailed?: boolean;
@@ -337,7 +335,6 @@ interface JobListProps {
 }
 
 export class JobListComponent extends React.Component<JobListProps, {
-    store: AppStore,
     jobs: Job[];
     jobStatusFilter: JobStatus;
     showSubmitJobForm: boolean;
@@ -424,7 +421,7 @@ export class JobListComponent extends React.Component<JobListProps, {
 
     return <div>
       <div style={{ width: "100%", paddingBottom: "10px" }}>
-        <Button bsStyle="success" disabled={!this.props.store.isLoggedIn} onClick={this.onSubmitNewJobClick.bind(this)}>Submit New Job</Button>
+        <Button bsStyle="success" disabled={!appStore.isLoggedIn} onClick={this.onSubmitNewJobClick.bind(this)}>Submit New Job</Button>
       </div>
       <div style={{ display: "table", width: "100%" }}>
         <div style={{ display: "table-row" }}>
@@ -464,7 +461,7 @@ export class JobListComponent extends React.Component<JobListProps, {
             }
             return true;
           }).map((job: Job) => {
-            return <JobListItemComponent store={this.props.store} detailed={this.props.detailed} key={job.id} job={job} onCancel={this.onCancelJob.bind(this)}></JobListItemComponent>
+            return <JobListItemComponent detailed={this.props.detailed} key={job.id} job={job} onCancel={this.onCancelJob.bind(this)}></JobListItemComponent>
           })}
         </ListGroup>
       </div>
@@ -487,5 +484,3 @@ export class JobListComponent extends React.Component<JobListProps, {
     }
   }
 }
-
-

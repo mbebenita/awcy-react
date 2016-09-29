@@ -9,46 +9,30 @@ import { Tabs, Tab } from "react-bootstrap";
 
 import { FullReportComponent } from "./components/FullReport"
 import { JobListComponent } from "./components/Jobs"
-import { JobLogComponent, AppStatusComponent } from "./components/Log"
+import { AppStatusComponent } from "./components/AppStatus"
 
-import { AppStore, Job, JobStatus, SelectJob, AppDispatcher } from "./stores/Stores"
+import { appStore, AppStore, Job, JobStatus, SelectJob, AppDispatcher } from "./stores/Stores"
 
 import { AnalyzerComponent, ShareComponent, LoginComponent } from "./components/Widgets"
 
-export interface AppProps { }
-export interface AppState { }
-
-export class Lots extends React.Component<void, void> {
-  render() {
-    let a = [];
-    for (let i = 0; i < 1000; i++) {
-      a.push(<p key={i}>{i}</p>)
-    }
-    return <div>{a}</div>;
-  }
-}
-
-export class App extends React.Component<AppProps, AppState> {
-  store: AppStore;
+export class App extends React.Component<void, void> {
   constructor() {
     super();
-    this.store = new AppStore();
-
-    this.store.onChange.attach(() => {
+    appStore.onChange.attach(() => {
       this.forceUpdate();
     });
 
-    this.store.onAnalyzedFilesChanged.attach(() => {
+    appStore.onAnalyzedFilesChanged.attach(() => {
       this.forceUpdate();
     });
   }
 
   componentDidMount() {
-    this.store.load();
+    appStore.load();
   }
 
   render() {
-    let analyzerTabs = this.store.analyzedFiles.map((o, i) => {
+    let analyzerTabs = appStore.analyzedFiles.map((o, i) => {
       return <Tab eventKey={5 + i} key={o.decoderUrl + o.videoUrl + i} title={"Analyzer: " + o.videoUrl}>
         <div style={{ padding: 10, height: window.innerHeight, overflow: "scroll" }}>
           <AnalyzerComponent decoderUrl={o.decoderUrl} videoUrl={o.videoUrl}/>
@@ -61,17 +45,22 @@ export class App extends React.Component<AppProps, AppState> {
         <Tabs defaultActiveKey={1} animation={false} id="noanim-tab-example">
           <Tab eventKey={1} key="runs" title="Runs">
             <div style={{ padding: 10 }}>
-              <JobListComponent store={this.store} jobStatusFilter={JobStatus.All} jobs={this.store.jobs} listHeight={window.innerHeight - 200} />
+              <JobListComponent jobStatusFilter={JobStatus.Completed} jobs={appStore.jobs} listHeight={window.innerHeight - 200} />
             </div>
           </Tab>
-          <Tab eventKey={2} key="share" title="Share">
+          <Tab eventKey={2} key="jobs" title="Jobs">
             <div style={{ padding: 10 }}>
-              <ShareComponent store={this.store} />
+
             </div>
           </Tab>
-          <Tab eventKey={3} key="login" title="Login">
+          <Tab eventKey={3} key="share" title="Share">
             <div style={{ padding: 10 }}>
-              <LoginComponent store={this.store}/>
+              <ShareComponent/>
+            </div>
+          </Tab>
+          <Tab eventKey={4} key="login" title="Login">
+            <div style={{ padding: 10 }}>
+              <LoginComponent/>
             </div>
           </Tab>
         </Tabs>
@@ -80,12 +69,12 @@ export class App extends React.Component<AppProps, AppState> {
         <Tabs defaultActiveKey={3} animation={false} id="noanim-tab-example">
           <Tab eventKey={3} key="graphs" title="Report">
             <div style={{ padding: 10, height: window.innerHeight, overflow: "scroll" }}>
-              <FullReportComponent jobs={this.store.selectedJobs} />
+              <FullReportComponent jobs={appStore.selectedJobs} />
             </div>
           </Tab>
           <Tab eventKey={4} key="status" title="Status">
             <div style={{ padding: 10, height: window.innerHeight, overflow: "scroll" }}>
-              <AppStatusComponent store={this.store} />
+              <AppStatusComponent/>
             </div>
           </Tab>
           {analyzerTabs}

@@ -9,9 +9,9 @@ import { Promise } from "es6-promise";
 import { AnalyzerVideoSelectorComponent, AnalyzerComponent } from "./Widgets";
 
 import { JobListItemComponent } from "./Jobs";
-import { JobLogComponent } from "./Log";
+import { JobLogComponent } from "./JobLog";
 
-import { AppStore, Jobs, Job, JobStatus, loadXHR, ReportField, reportFieldNames, metricNames, metricNameToReportFieldIndex } from "../stores/Stores";
+import { Jobs, Job, JobStatus, loadXHR, ReportField, reportFieldNames, metricNames, metricNameToReportFieldIndex } from "../stores/Stores";
 declare var google: any;
 declare var tinycolor: any;
 declare var require: any;
@@ -164,7 +164,7 @@ export class FullReportComponent extends React.Component<{
     jobs.forEach(job => {
       if (!job.completed) {
         failedJobInfos.push(<Panel key={job.id}>
-          <JobListItemComponent store={null} detailed job={job}/>
+          <JobListItemComponent detailed job={job}/>
           <JobLogComponent job={job} />
         </Panel>);
       }

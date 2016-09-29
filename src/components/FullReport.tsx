@@ -153,20 +153,19 @@ export class FullReportComponent extends React.Component<{
   }
   render() {
     console.debug("Rendering Full Report");
-    let jobs = this.props.jobs.jobs;
+    let jobs = this.props.jobs.jobs.filter(job => job.completed);
     if (jobs.length == 0) {
       return <div>
-        <p>No runs selected.</p>
+        <p>No completed runs selected.</p>
       </div>
     }
 
     let selectedJobs = [];
-    if (false) {
+    if (true) {
       jobs.forEach(job => {
         let log = job.completed ? null : <JobLogComponent job={job} />
         selectedJobs.push(<Panel key={job.id}>
           <JobComponent detailed job={job}/>
-          {log}
         </Panel>);
       });
     }

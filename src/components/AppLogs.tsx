@@ -17,13 +17,18 @@ export class AppLogsComponent extends React.Component<void, void> {
     console.debug("Rendering Logs");
     let logs = [];
     appStore.selectedJobs.jobs.forEach(job => {
-      logs.push(<Panel key={job.id}>
+      logs.push(<div key={job.id}>
         <JobComponent detailed job={job}/>
         <JobLogComponent job={job} />
-      </Panel>);
+      </div>);
     });
-    return <div>
+    if (logs.length == 0) {
+      logs.push(<div>
+        No runs selected.
+      </div>);
+    }
+    return <Panel>
       {logs}
-    </div>
+    </Panel>
   }
 }

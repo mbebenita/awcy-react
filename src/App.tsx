@@ -75,14 +75,14 @@ export class App extends React.Component<void, void> {
               <FullReportComponent jobs={appStore.selectedJobs} />
             </div>
           </Tab>
-          <Tab eventKey={4} key="status" title="Status">
-            <div style={{ padding: 10, height: height - 100, overflow: "scroll" }}>
-              <AppStatusComponent/>
-            </div>
-          </Tab>
-          <Tab eventKey={5} key="logs" title="Logs">
+          <Tab eventKey={4} key="logs" title="Logs">
             <div style={{ padding: 10, height: height - 100, overflow: "scroll" }}>
               <AppLogsComponent/>
+            </div>
+          </Tab>
+          <Tab eventKey={5} key="status" title="Status">
+            <div style={{ padding: 10, height: height - 100, overflow: "scroll" }}>
+              <AppStatusComponent/>
             </div>
           </Tab>
           {analyzerTabs}

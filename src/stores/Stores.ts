@@ -58,7 +58,33 @@ export function postXHR(path: string, o: any): Promise<boolean> {
     xhr.send(data);
   });
 }
-export function loadXHR(path: string, next: (json: any) => void, type = "json") {
+
+export function loadXHR2<T>(path: string, type = "json"): Promise<T> {
+  return new Promise((resolve, reject) => {
+    let xhr = new XMLHttpRequest();
+    let self = this;
+    xhr.open("GET", path, true);
+    xhr.responseType = "text";
+    xhr.send();
+
+    xhr.addEventListener("load", function () {
+      if (xhr.status != 200) {
+        console.error("Failed to load XHR: " + path);
+        reject();
+        return;
+      }
+      console.info("Loaded XHR: " + path);
+      let response = this.responseText;
+      if (type === "json") {
+        response = response.replace(/NaN/g, "null");
+        response = response ? JSON.parse(response) : null;
+      }
+      resolve(response);
+    });
+  });
+}
+
+export function loadXHR(path: string, next: (json: any) => void, fail: () => void = null, type = "json") {
   let xhr = new XMLHttpRequest();
   let self = this;
   xhr.open("GET", path, true);
@@ -68,6 +94,7 @@ export function loadXHR(path: string, next: (json: any) => void, type = "json") 
   xhr.addEventListener("load", function () {
     if (xhr.status != 200) {
       console.error("Failed to load XHR: " + path);
+      fail && fail();
       return;
     }
     console.info("Loaded XHR: " + path);
@@ -243,12 +270,15 @@ export class Job {
   status: JobStatus = JobStatus.None;
   date: Date;
   completed: boolean;
-  log: string = "";
+
   progress: JobProgress = new JobProgress(0, 0);
   selected: boolean = false;
   selectedName: string = "";
   color: string = "";
   onChange = new AsyncEvent<string>();
+
+  log: string = "";
+  onLogChange = new AsyncEvent<string>();
 
   constructor() {
 
@@ -258,21 +288,21 @@ export class Job {
     if (this.log && !refresh) {
       return Promise.resolve(this.log);
     }
-    return new Promise((resolve, reject) => {
-      let path = baseUrl + `runs/${this.id}/output.txt`;
-      loadXHR(path, (text) => {
-        this.log = text;
-        this.onChange.post("updated-log");
-        resolve(text);
-      }, "text");
-    })
+    let path = baseUrl + `runs/${this.id}/output.txt`;
+    return loadXHR2<string>(path, "text").then((log) => {
+      this.log = log;
+      this.onLogChange.post("");
+    }).catch(() => {
+      this.log = "";
+      this.onLogChange.post("");
+    }) as any;
   }
 
   loadFile(path: string): Promise<string> {
     return new Promise((resolve, reject) => {
       loadXHR(path, (text) => {
         resolve(text);
-      }, "text");
+      }, () => reject(), "text");
     });
   }
 

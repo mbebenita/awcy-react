@@ -1,24 +1,39 @@
 import * as React from "react";
+import { Panel } from "react-bootstrap";
 import { Job } from "../stores/Stores";
 
 export class JobLogComponent extends React.Component<{
   job: Job
 }, {
-    text: string
+    isLoading: boolean;
   }> {
+  onChange: any;
   constructor() {
     super();
-    this.state = { text: "" };
+    this.state = { isLoading: true } as any;
+    this.onChange = () => {
+      this.forceUpdate();
+    };
   }
   componentDidMount() {
     let job = this.props.job;
     if (job) {
-      job.onChange.attach(() => {
-        this.setState({ text: job.log } as any);
+      job.onChange.attach(this.onChange);
+      this.setState({isLoading: true});
+      job.loadLog(true).then(() => {
+        this.setState({isLoading: false});
       });
     }
   }
+  componentDidUnmount() {
+    let job = this.props.job;
+    job.onChange.detach(this.onChange);
+  }
   render() {
-    return <pre className="log" style={{ height: "256px", overflow: "scroll" }}>{this.state.text}</pre>;
+    let job = this.props.job;
+    if (this.state.isLoading) {
+      return <Panel><span className="glyphicon glyphicon-refresh glyphicon-refresh-animate"></span> Loading log ...</Panel>
+    }
+    return <pre className="log">{job.log}</pre>;
   }
 }

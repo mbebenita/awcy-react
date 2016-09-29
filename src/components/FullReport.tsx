@@ -26,7 +26,6 @@ export class FullReportComponent extends React.Component<{
     fit: boolean;
     log: boolean;
     stack: boolean;
-    jobsToCompare: Job[];
   }> {
   constructor() {
     super();
@@ -34,7 +33,6 @@ export class FullReportComponent extends React.Component<{
       fit: true,
       log: true,
       stack: false,
-      jobsToCompare: [],
       metrics: ["MSSSIM"],
       videos: [],
       qualities: []
@@ -49,8 +47,10 @@ export class FullReportComponent extends React.Component<{
   load() {
     Promise.all(this.props.jobs.jobs.map(job => {
       return job.loadReport();
-    })).then(data => {
-      this.setState({ jobsToCompare: this.props.jobs.jobs } as any);
+    })).catch(() => {
+      this.forceUpdate();
+    }).then(data => {
+      this.forceUpdate();
     });
   }
   getSeries(name: string, metric: string): ScatterPlotSeries[] {
@@ -160,22 +160,22 @@ export class FullReportComponent extends React.Component<{
       </div>
     }
 
-    let failedJobInfos = [];
-    jobs.forEach(job => {
-      if (!job.completed) {
-        failedJobInfos.push(<Panel key={job.id}>
+    let selectedJobs = [];
+    if (false) {
+      jobs.forEach(job => {
+        let log = job.completed ? null : <JobLogComponent job={job} />
+        selectedJobs.push(<Panel key={job.id}>
           <JobComponent detailed job={job}/>
-          <JobLogComponent job={job} />
+          {log}
         </Panel>);
-      }
-    });
+      });
+    }
 
     let tables = [];
     let job = jobs[0];
     let otherJob = jobs[1];
     let metrics = this.state.metrics;
     let qualities = this.state.qualities;
-    let jobsToCompare = this.state.jobsToCompare;
     for (let video in job.report) {
       if (this.state.videos.length && this.state.videos.indexOf(video) < 0) {
         continue;
@@ -185,8 +185,11 @@ export class FullReportComponent extends React.Component<{
       }
       tables.push(this.renderVideoReport(video, this.state.stack));
     }
-    let report = <BDRateReportComponent a={jobsToCompare[0]} b={jobsToCompare[1]}/>
+    let report = <BDRateReportComponent a={jobs[0]} b={jobs[1]}/>
     return <div style={{ width: "980px" }}>
+      <div>
+        {selectedJobs}
+      </div>
       <div>
         <JobSelectorComponent metrics={this.state.metrics} jobs={this.props.jobs.jobs} onChange={this.onJobSelectorChange.bind(this)} />
       </div>

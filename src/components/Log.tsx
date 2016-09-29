@@ -91,7 +91,7 @@ export class AppStatusComponent extends React.Component<{
     store.jobs.jobs.forEach(job => {
       if (job.status === JobStatus.Running) {
         jobInfos.push(<Panel key={job.id}>
-          <JobListItemComponent detailed job={job}/>
+          <JobListItemComponent store={store} detailed job={job}/>
           <JobLogComponent job={job} />
         </Panel>);
       }

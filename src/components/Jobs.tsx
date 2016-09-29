@@ -21,6 +21,8 @@ export class JobListItemComponent extends React.Component<JobListItemProps, {
     hasReport: undefined | boolean;
     hasAnalyzer: undefined | boolean;
   }> {
+
+  onChangeHandler: any;
   constructor(props: JobListItemProps) {
     super();
     this.state = {
@@ -29,12 +31,15 @@ export class JobListItemComponent extends React.Component<JobListItemProps, {
       hasReport: undefined,
       hasAnalyzer: undefined
     };
+    this.onChangeHandler = () => {
+      this.forceUpdate();
+    };
   }
   componentWillMount() {
-    let job = this.props.job;
-    job.onChange.attach(() => {
-      this.setState({ job } as any);
-    });
+    this.props.job.onChange.attach(this.onChangeHandler);
+  }
+  componentWillUnmount() {
+    this.props.job.onChange.detach(this.onChangeHandler);
   }
   onCancelClick() {
     this.setState({ showCancelModal: true } as any);

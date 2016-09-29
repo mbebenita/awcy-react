@@ -249,6 +249,7 @@ export class Job {
   selectedName: string = "";
   color: string = "";
   onChange = new AsyncEvent<string>();
+
   constructor() {
 
   }
@@ -354,6 +355,13 @@ export class Jobs {
     }
     this.jobs.push(job);
   }
+  prependJob(job: Job) {
+    if (this.jobs.indexOf(job) >= 0) {
+      return;
+    }
+    this.jobs.unshift(job);
+    this.onChange.post("job-added");
+  }
   addJob(job: Job) {
     if (this.jobs.indexOf(job) >= 0) {
       return;
@@ -445,11 +453,9 @@ export class AppStore {
         job.onChange.post("job-changed");
         this.selectedJobs.removeJob(job);
       } else if (action instanceof SubmitJob) {
-        let job = action.job;
-        this.submitJob(this.password, job);
+        this.submitJob(action.job);
       } else if (action instanceof CancelJob) {
-        let job = action.job;
-        this.jobs.removeJob(job);
+        this.cancelJob(action.job);
       } else if (action instanceof AnalyzeFile) {
         this.analyzedFiles.push({job: null, decoderUrl: "http://aomanalyzer.org/bin/decoder.js", videoUrl: "crosswalk_30.ivf"})
         this.onAnalyzedFilesChanged.post("change");
@@ -477,9 +483,9 @@ export class AppStore {
       });
     });
   }
-  submitJob(key: string, job: Job) {
+  submitJob(job: Job) {
     postXHR(baseUrl + "submit/job", {
-      key: key,
+      key: this.password,
       run_id: job.id,
       commit: job.commit,
       codec: job.codec,
@@ -492,8 +498,16 @@ export class AppStore {
       save_encode: job.saveEncodedFiles
     });
     job.status = JobStatus.Running;
-    this.jobs.addJob(job);
+    this.jobs.prependJob(job);
   }
+  cancelJob(job: Job) {
+    postXHR(baseUrl + "submit/cancel", {
+      key: this.password,
+      run_id: job.id,
+    });
+    this.jobs.removeJob(job);
+  }
+
   load() {
     this.loadJobs().then(() => {
       this.loadAWS();
@@ -567,7 +581,7 @@ export class AppStore {
         job.progress.value = o.completed;
         job.progress.total = o.total;
         job.loadLog(true);
-        job.onChange.post("updated");
+        job.onChange.post("updated status");
       });
     });
   }

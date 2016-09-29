@@ -8,6 +8,9 @@ import { JobSelectorComponent } from "./Widgets";
 import { Promise } from "es6-promise";
 import { AnalyzerVideoSelectorComponent, AnalyzerComponent } from "./Widgets";
 
+import { JobListItemComponent } from "./Jobs";
+import { JobLogComponent } from "./Log";
+
 import { AppStore, Jobs, Job, JobStatus, loadXHR, ReportField, reportFieldNames, metricNames, metricNameToReportFieldIndex } from "../stores/Stores";
 declare var google: any;
 declare var tinycolor: any;
@@ -156,6 +159,17 @@ export class FullReportComponent extends React.Component<{
         <p>No runs selected.</p>
       </div>
     }
+
+    let failedJobInfos = [];
+    jobs.forEach(job => {
+      if (!job.completed) {
+        failedJobInfos.push(<Panel key={job.id}>
+          <JobListItemComponent store={null} detailed job={job}/>
+          <JobLogComponent job={job} />
+        </Panel>);
+      }
+    });
+
     let tables = [];
     let job = jobs[0];
     let otherJob = jobs[1];

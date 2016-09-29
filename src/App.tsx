@@ -45,12 +45,12 @@ export class App extends React.Component<void, void> {
         <Tabs defaultActiveKey={1} animation={false} id="noanim-tab-example">
           <Tab eventKey={1} key="runs" title="Runs">
             <div style={{ padding: 10 }}>
-              <JobsComponent jobStatusFilter={JobStatus.Completed} jobs={appStore.jobs} listHeight={window.innerHeight - 200} />
+              <JobsComponent showFilters jobStatusFilter={JobStatus.Completed} jobs={appStore.jobs} listHeight={window.innerHeight - 200} />
             </div>
           </Tab>
           <Tab eventKey={2} key="jobs" title="Jobs">
             <div style={{ padding: 10 }}>
-
+              <JobsComponent jobStatusFilter={JobStatus.Running} jobs={appStore.jobs} listHeight={window.innerHeight - 200} />
             </div>
           </Tab>
           <Tab eventKey={3} key="share" title="Share">

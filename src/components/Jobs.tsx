@@ -15,6 +15,7 @@ interface JobsProps {
   jobs: Jobs;
   jobStatusFilter?: JobStatus;
   detailed?: boolean;
+  showFilters?: boolean;
   listHeight: number
 }
 
@@ -65,10 +66,8 @@ export class JobsComponent extends React.Component<JobsProps, {
   onSubmitNewJobClick() {
     this.setState({ showSubmitJobForm: true } as any);
   }
-
-  makeJobList() {
+  makeFilters() {
     let jobs = this.state.jobs;
-
     let codecOptions = [];
     for (let key in Job.codecs) {
       let name = Job.codecs[key];
@@ -102,11 +101,7 @@ export class JobsComponent extends React.Component<JobsProps, {
     authorOptions = uniqueAuthors.map(author => {
       return { value: author, label: author };
     });
-
     return <div>
-      <div style={{ width: "100%", paddingBottom: "10px" }}>
-        <Button bsStyle="success" disabled={!appStore.isLoggedIn} onClick={this.onSubmitNewJobClick.bind(this)}>Submit New Job</Button>
-      </div>
       <div style={{ display: "table", width: "100%" }}>
         <div style={{ display: "table-row" }}>
           <div style={{ display: "table-cell", paddingRight: "5px" }}>
@@ -123,6 +118,16 @@ export class JobsComponent extends React.Component<JobsProps, {
       <div style={{ width: "100%", paddingTop: "10px", paddingBottom: "10px" }}>
         <Select multi placeholder="Config" value={this.state.configs} options={configOptions} onChange={this.onChangeConfigs.bind(this)} />
       </div>
+    </div>
+  }
+  makeJobList() {
+    let jobs = this.state.jobs;
+    let filters = this.props.showFilters ? this.makeFilters() : null;
+    return <div>
+      <div style={{ width: "100%", paddingBottom: "10px" }}>
+        <Button bsStyle="success" disabled={!appStore.isLoggedIn} onClick={this.onSubmitNewJobClick.bind(this)}>Submit New Job</Button>
+      </div>
+      {filters}
       <div style={{bottom: 0, height: this.props.listHeight, overflow: "scroll", overflowX: "hidden"}}>
         <ListGroup componentClass="ul">
           {jobs.filter((job: Job) => {

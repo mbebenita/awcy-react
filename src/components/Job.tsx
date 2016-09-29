@@ -68,7 +68,12 @@ export class JobComponent extends React.Component<JobProps, {
       let elapsed = minutesSince(job.date);
       let remaining = Math.round(elapsed / value - elapsed);
       label += " (" + remaining + "m left)";
-      progress = <ProgressBar active now={100 * value} label={label} />
+      let now = value > 0 ? 100 * value : 100;
+      if (value === 0) {
+        progress = <ProgressBar bsStyle="warning" label="Not Started" now={100}/>
+      } else {
+        progress = <ProgressBar active now={now} label={label}/>
+      }
     } else if (job.status === JobStatus.Pending) {
       progress = <ProgressBar now={0} />
     }
@@ -77,10 +82,10 @@ export class JobComponent extends React.Component<JobProps, {
     let select = null;
     if (job.status == JobStatus.Pending || job.status == JobStatus.Running) {
       if (this.props.onCancel) {
-        cancel = <Button bsStyle="danger" disabled={!appStore.isLoggedIn} onClick={this.onCancelClick.bind(this)}>Cancel</Button>;
+        cancel = <Button bsSize="small" bsStyle="danger" disabled={!appStore.isLoggedIn} onClick={this.onCancelClick.bind(this)}>Cancel</Button>;
       }
     } else {
-      select = <Button onClick={this.onToggleSelectionClick.bind(this)}>{job.selected ? "Deselect " + job.selectedName : "Select"}</Button>
+      select = <Button bsSize="small" onClick={this.onToggleSelectionClick.bind(this)}>{job.selected ? "Deselect " + job.selectedName : "Select"}</Button>
     }
     let hasCompleted = null;
     if (!job.completed && job.status !== JobStatus.Running) {
@@ -112,7 +117,7 @@ export class JobComponent extends React.Component<JobProps, {
       extra.push("Run A/B Compare: " + job.runABCompare);
       extra.push("Save Encoded Files: " + job.saveEncodedFiles);
     }
-    return <div className="list-group-item" style={{ borderRight, backgroundColor}}>
+    return <div className="job" style={{ borderRight, backgroundColor}}>
       <Modal show={this.state.showCancelModal} onHide={this.abortCancel.bind(this)}>
         <Modal.Header closeButton>
           <Modal.Title>Cancel job?</Modal.Title>

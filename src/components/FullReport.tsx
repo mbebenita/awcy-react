@@ -147,9 +147,9 @@ export class FullReportComponent extends React.Component<{
         <Tabs animation={false} id="noanim-tab-example">
           {tabs}
         </Tabs>
-        <AnalyzerVideoSelectorComponent video={video} jobs={jobs}/>
       </Panel>
     </div>
+    // <AnalyzerVideoSelectorComponent video={video} jobs={jobs}/>
   }
   render() {
     console.debug("Rendering Full Report");

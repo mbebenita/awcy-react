@@ -1,7 +1,7 @@
 import * as React from "react";
 import { Table, Panel } from "react-bootstrap";
 import { appStore, Job, Jobs, timeSince, daysSince, JobStatus} from "../stores/Stores";
-import { JobListItemComponent } from "./Jobs";
+import { JobComponent } from "./Job";
 import { JobLogComponent } from "./JobLog";
 
 export class AppStatusComponent extends React.Component<void, {
@@ -64,7 +64,7 @@ export class AppStatusComponent extends React.Component<void, {
     appStore.jobs.jobs.forEach(job => {
       if (job.status === JobStatus.Running) {
         jobInfos.push(<Panel key={job.id}>
-          <JobListItemComponent detailed job={job}/>
+          <JobComponent detailed job={job}/>
           <JobLogComponent job={job} />
         </Panel>);
       }

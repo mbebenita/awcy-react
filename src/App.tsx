@@ -8,7 +8,7 @@ import { Panel } from "react-bootstrap";
 import { Tabs, Tab } from "react-bootstrap";
 
 import { FullReportComponent } from "./components/FullReport"
-import { JobListComponent } from "./components/Jobs"
+import { JobsComponent } from "./components/Jobs"
 import { AppStatusComponent } from "./components/AppStatus"
 
 import { appStore, AppStore, Job, JobStatus, SelectJob, AppDispatcher } from "./stores/Stores"
@@ -45,7 +45,7 @@ export class App extends React.Component<void, void> {
         <Tabs defaultActiveKey={1} animation={false} id="noanim-tab-example">
           <Tab eventKey={1} key="runs" title="Runs">
             <div style={{ padding: 10 }}>
-              <JobListComponent jobStatusFilter={JobStatus.Completed} jobs={appStore.jobs} listHeight={window.innerHeight - 200} />
+              <JobsComponent jobStatusFilter={JobStatus.Completed} jobs={appStore.jobs} listHeight={window.innerHeight - 200} />
             </div>
           </Tab>
           <Tab eventKey={2} key="jobs" title="Jobs">

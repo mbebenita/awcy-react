@@ -11,6 +11,7 @@ import { FullReportComponent } from "./components/FullReport"
 import { JobsComponent } from "./components/Jobs"
 import { AppStatusComponent } from "./components/AppStatus"
 import { AppLogsComponent } from "./components/AppLogs"
+import { DebugComponent } from "./components/Debug"
 
 import { appStore, AppStore, Job, JobStatus, SelectJob, AppDispatcher } from "./stores/Stores"
 
@@ -53,7 +54,7 @@ export class App extends React.Component<void, void> {
           </Tab>
           <Tab eventKey={2} key="jobs" title="Jobs">
             <div style={{ padding: 10 }}>
-              <JobsComponent jobStatusFilter={JobStatus.Running} jobs={appStore.jobs} listHeight={height - 200} />
+              <JobsComponent jobStatusFilter={JobStatus.NotCompleted} jobs={appStore.jobs} listHeight={height - 200} />
             </div>
           </Tab>
           <Tab eventKey={3} key="share" title="Share">
@@ -83,6 +84,11 @@ export class App extends React.Component<void, void> {
           <Tab eventKey={5} key="status" title="Status">
             <div style={{ padding: 10, height: height - 100, overflow: "scroll" }}>
               <AppStatusComponent/>
+            </div>
+          </Tab>
+          <Tab eventKey={6} key="debug" title="Debug">
+            <div style={{ padding: 10, height: height - 100, overflow: "scroll" }}>
+              <DebugComponent/>
             </div>
           </Tab>
           {analyzerTabs}

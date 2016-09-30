@@ -50,9 +50,11 @@ export function postXHR(path: string, o: any): Promise<boolean> {
     xhr.open('POST', path);
     xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
     xhr.addEventListener('load', function(event) {
+      console.info(data + " " + xhr.response);
       resolve(xhr.status === 200);
     });
     xhr.addEventListener('error', function(event) {
+      console.error(data + " " + xhr.response);
       reject(false);
     });
     xhr.send(data);
@@ -155,10 +157,15 @@ export function timeSince(date: Date) {
 
 export enum JobStatus {
   None = 0,
-  Running = 1,
-  Pending = 2,
-  Completed = 4,
-  All = Running | Pending | Completed
+  New = 1,
+  Failed = 2,
+  Running = 4,
+  Building = 8,
+  Canceled = 16,
+  Completed = 32,
+  All = Running | Building | Completed | New | Failed | Completed | Canceled,
+  NotCompleted = All & ~Completed,
+  Cancelable = New | Running | Building
 }
 
 export enum ReportField {
@@ -269,7 +276,6 @@ export class Job {
   saveEncodedFiles: boolean = false;
   status: JobStatus = JobStatus.None;
   date: Date;
-  completed: boolean;
 
   progress: JobProgress = new JobProgress(0, 0);
   selected: boolean = false;
@@ -466,6 +472,7 @@ export class AppStore {
   isLoggedIn: boolean = false;
   password: string = "";
   onLoggedInStateChanged = new AsyncEvent<string>();
+  inMockMode = true;
   constructor() {
     this.jobs = new Jobs();
     this.selectedJobs = new Jobs();
@@ -518,6 +525,9 @@ export class AppStore {
     });
   }
   submitJob(job: Job) {
+    job.status = JobStatus.New;
+    this.jobs.addJob(job);
+    if (this.inMockMode) return;
     postXHR(baseUrl + "submit/job", {
       key: this.password,
       run_id: job.id,
@@ -531,15 +541,30 @@ export class AppStore {
       ab_compare: job.runABCompare,
       save_encode: job.saveEncodedFiles
     });
-    job.status = JobStatus.Running;
-    this.jobs.prependJob(job);
   }
   cancelJob(job: Job) {
+    job.status = JobStatus.Canceled;
+    job.onChange.post("");
+    this.jobs.onChange.post("");
+    if (this.inMockMode) return;
     postXHR(baseUrl + "submit/cancel", {
       key: this.password,
       run_id: job.id,
     });
-    this.jobs.removeJob(job);
+  }
+
+  poll() {
+    console.info("Polling ...");
+    this.loadJobs().then(() => {
+      this.loadStatus();
+      this.loadAWS();
+    });
+  }
+
+  startPolling() {
+    setInterval(() => {
+      this.poll();
+    }, 100000);
   }
 
   load() {
@@ -548,15 +573,11 @@ export class AppStore {
       Promise.all([this.loadSets(), this.loadStatus()]).then(() => {
         this.processUrlParameters();
       });
-      setInterval(() => {
-        this.loadStatus();
-      }, 10000);
+      // this.startPolling();
     });
-
     if (localStorage["password"]) {
       this.login(localStorage["password"]);
     }
-
   }
   loadAWS() {
     loadXHR(baseUrl + "describeAutoScalingInstances", (json) => {
@@ -631,21 +652,46 @@ export class AppStore {
   }
 
   loadJobs(): Promise<boolean> {
+    function fromStatus(status: string): JobStatus {
+      return JobStatus.Completed;
+      switch (status) {
+        case "none": return JobStatus.None;
+        case "new": return JobStatus.New;
+        case "building": return JobStatus.Building;
+        case "running": return JobStatus.Running;
+        case "completed": return JobStatus.Completed;
+        case "canceled": return JobStatus.Canceled;
+        case "failed": return JobStatus.Failed;
+      }
+    }
     return new Promise((resolve, reject) => {
       loadXHR(baseUrl + "list.json", (json) => {
         json = json.filter(job => job.info.task === "objective-1-fast" && job.info.codec === "av1");
         json.sort(function (a, b) {
           return (new Date(b.date) as any) - (new Date(a.date) as any);
         });
+        let changed = false;
         json = json.slice(0, 100);
         json.forEach(o => {
-          let job = Job.fromJSON(o.info);
-          job.date = new Date(o.date);
-          job.completed = !o.failed;
-          job.status = JobStatus.Completed;
-          this.jobs.addJobInternal(job);
+          let job = this.findJob(o.run_id);
+          if (job) {
+            let newStatus = fromStatus(o.status);
+            if (job.status !== newStatus) {
+              job.status = newStatus;
+              job.onChange.post("");
+              changed = true;
+            }
+          } else {
+            job = Job.fromJSON(o.info);
+            job.date = new Date(o.date);
+            job.status = fromStatus(o.status);
+            this.jobs.addJobInternal(job);
+            changed = true;
+          }
         });
-        this.jobs.onChange.post("job-added");
+        if (changed) {
+          this.jobs.onChange.post("");
+        }
         resolve(true);
       });
     });

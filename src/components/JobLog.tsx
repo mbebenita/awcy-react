@@ -25,7 +25,7 @@ export class JobLogComponent extends React.Component<{
       });
     }
   }
-  componentDidUnmount() {
+  componentWillUnmount() {
     let job = this.props.job;
     job.onChange.detach(this.onChange);
   }

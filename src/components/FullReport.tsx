@@ -47,7 +47,7 @@ export class FullReportComponent extends React.Component<{
     this.load();
   }
   load() {
-    let jobs = this.props.jobs.jobs.filter(job => job.completed);
+    let jobs = this.props.jobs.jobs.filter(job => job.status === JobStatus.Completed);
     Promise.all(jobs.map(job => {
       return job.loadReport();
     })).catch(() => {
@@ -162,14 +162,13 @@ export class FullReportComponent extends React.Component<{
     console.debug("Rendering Full Report");
     let jobs = this.state.jobs;
     if (jobs.length == 0) {
-      return <div>
-        <p>No completed runs selected.</p>
-      </div>
+      return <Panel>
+        No completed runs selected.
+      </Panel>
     }
 
     let selectedJobs = [];
     jobs.forEach(job => {
-      let log = job.completed ? null : <JobLogComponent job={job} />
       selectedJobs.push(<JobComponent key={job.id} job={job}/>);
     });
 

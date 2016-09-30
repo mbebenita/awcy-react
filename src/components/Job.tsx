@@ -50,9 +50,9 @@ export class JobComponent extends React.Component<JobProps, {
     job.hasAnalyzer().then(result => {
       this.setState({hasAnalyzer: result} as any);
     });
-    job.hasReport().then(result => {
-      this.setState({hasReport: result} as any);
-    });
+    // job.hasReport().then(result => {
+    //   this.setState({hasReport: result} as any);
+    // });
   }
   abortCancel() {
     this.setState({ showCancelModal: false } as any);
@@ -67,7 +67,7 @@ export class JobComponent extends React.Component<JobProps, {
   render() {
     let job = this.props.job;
     let progress = null;
-    if (job.status === JobStatus.Running) {
+    if (job.status & JobStatus.Cancelable) {
       let value = job.progress.total ? job.progress.value / job.progress.total : 0;
       let label = `${job.progress.value} of ${job.progress.total}`;
       let elapsed = minutesSince(job.date);
@@ -75,25 +75,22 @@ export class JobComponent extends React.Component<JobProps, {
       label += " (" + remaining + "m left)";
       let now = value > 0 ? 100 * value : 100;
       if (value === 0) {
-        progress = <ProgressBar bsStyle="warning" label="Not Started" now={100}/>
+        progress = <ProgressBar bsStyle="warning" label={JobStatus[job.status]} now={100}/>
       } else {
         progress = <ProgressBar active now={now} label={label}/>
       }
-    } else if (job.status === JobStatus.Pending) {
-      progress = <ProgressBar now={0} />
     }
     let cancel = null;
     let select = null;
-    if (job.status == JobStatus.Pending || job.status == JobStatus.Running) {
+    if (job.status & JobStatus.Cancelable) {
       if (this.props.onCancel) {
         cancel = <Button bsSize="small" bsStyle="danger" disabled={!appStore.isLoggedIn} onClick={this.onCancelClick.bind(this)}>Cancel</Button>;
       }
-    } else {
-      select = <Button bsSize="small" onClick={this.onToggleSelectionClick.bind(this)}>{job.selected ? "Deselect " + job.selectedName : "Select"}</Button>
     }
-    let hasCompleted = null;
-    if (!job.completed && job.status !== JobStatus.Running) {
-      hasCompleted = <div className="jobWarning">Job failed.</div>
+    select = <Button bsSize="small" onClick={this.onToggleSelectionClick.bind(this)}>{job.selected ? "Deselect " + job.selectedName : "Select"}</Button>
+    let jobStatus = null;
+    if (job.status !== JobStatus.Completed) {
+      jobStatus = <div className="jobWarning">Job {JobStatus[job.status]}.</div>
     }
     let hasAnalyzer = null;
     if (this.state.hasAnalyzer !== undefined) {
@@ -101,13 +98,12 @@ export class JobComponent extends React.Component<JobProps, {
         hasAnalyzer = <div className="jobWarning">Analyzer failed to build.</div>
       }
     }
-    let hasReport = null;
-    if (this.state.hasReport !== undefined) {
-      if (this.state.hasReport === false) {
-        hasReport = <div className="jobWarning">Report failed to build or is not yet available.</div>
-      }
-    }
-    // let date = job.date ? `${job.date.toLocaleDateString()} ${job.date.toLocaleTimeString()} (${timeSince(job.date)})`: "";
+    // let hasReport = null;
+    // if (this.state.hasReport !== undefined) {
+    //   if (this.state.hasReport === false) {
+    //     hasReport = <div className="jobWarning">Report failed to build or is not yet available.</div>
+    //   }
+    // }
     let date = job.date ? `${timeSince(job.date)}`: "";
 
     let borderRight = job.selected ? "4px solid " + job.color : undefined;
@@ -116,7 +112,9 @@ export class JobComponent extends React.Component<JobProps, {
     if (job.selected) {
       backgroundColor = "#F0F0F0";
     }
-
+    if (job.status == JobStatus.Failed) {
+      backgroundColor = "#fcf6ed";
+    }
     function keyValue(key, value) {
       return <div key={key}><span className="tinyJobValue">{key}: </span><span className="tinyGrayJobValue">{value}</span></div>
     }
@@ -125,11 +123,13 @@ export class JobComponent extends React.Component<JobProps, {
     if (this.state.detailed) {
       if (job.buildOptions) details.push(keyValue("Build", job.buildOptions));
       if (job.extraOptions) details.push(keyValue("Extra", job.extraOptions));
+      details.push(keyValue("Codec", job.codec));
       details.push(keyValue("Commit", job.commit));
       details.push(keyValue("Task", job.task));
       details.push(keyValue("Qualities", job.qualities));
       details.push(keyValue("Run A/B Compare", job.runABCompare));
       details.push(keyValue("Save Encoded Files", job.saveEncodedFiles));
+      details.push(keyValue("Status", JobStatus[job.status]));
     }
     let award = null;
     if (job.nick === "codeview") {
@@ -150,12 +150,9 @@ export class JobComponent extends React.Component<JobProps, {
           <Button onClick={this.abortCancel.bind(this)}>No</Button>
         </Modal.Footer>
       </Modal>
-      {/*
-      {hasCompleted}
+      {jobStatus}
       {hasAnalyzer}
-      {hasReport}
       {progress}
-      */}
       <div style={{display: "flex", flexDirection: "row", justifyContent: "space-between"}}>
         {award}
         <div style={{paddingRight: "4px", flex: "1"}}>
@@ -166,7 +163,7 @@ export class JobComponent extends React.Component<JobProps, {
           {details}
         </div>
         <div>
-          {cancel}
+          {cancel}{' '}
           {select}
         </div>
       </div>

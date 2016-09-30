@@ -70,22 +70,22 @@ export class App extends React.Component<void, void> {
     ];
 
     let contentTabs = [
-      <Tab eventKey={3} key="graphs" title="Report">
+      <Tab eventKey={5} key="graphs" title="Report">
         <div style={{ padding: 10, height: height - 100, overflow: "scroll" }}>
           <FullReportComponent jobs={appStore.selectedJobs} />
         </div>
       </Tab>,
-      <Tab eventKey={4} key="logs" title="Logs">
+      <Tab eventKey={6} key="logs" title="Logs">
         <div style={{ padding: 10, height: height - 100, overflow: "scroll" }}>
           <AppLogsComponent/>
         </div>
       </Tab>,
-      <Tab eventKey={5} key="status" title="Status">
+      <Tab eventKey={7} key="status" title="Status">
         <div style={{ padding: 10, height: height - 100, overflow: "scroll" }}>
           <AppStatusComponent/>
         </div>
       </Tab>,
-      <Tab eventKey={6} key="debug" title="Debug">
+      <Tab eventKey={8} key="debug" title="Debug">
         <div style={{ padding: 10, height: height - 100, overflow: "scroll" }}>
           <DebugComponent/>
         </div>

@@ -45,6 +45,7 @@ export class App extends React.Component<void, void> {
 
     let height = window.innerHeight;
     let width = window.innerWidth;
+    let mergeTabs = width < 1024;
 
     let sidebarTabs = [
       <Tab eventKey={1} key="runs" title="Runs">
@@ -92,7 +93,7 @@ export class App extends React.Component<void, void> {
       </Tab>
     ];
 
-    if (width < 1024) {
+    if (mergeTabs) {
       return <div>
         <Tabs defaultActiveKey={1} animation={false} id="noanim-tab-example">
           {sidebarTabs}
@@ -107,7 +108,7 @@ export class App extends React.Component<void, void> {
         </Tabs>
       </div>
       <div className="content">
-        <Tabs defaultActiveKey={3} animation={false} id="noanim-tab-example">
+        <Tabs defaultActiveKey={5} animation={false} id="noanim-tab-example">
           {contentTabs}
         </Tabs>
       </div>

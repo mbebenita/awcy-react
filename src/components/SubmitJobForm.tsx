@@ -36,6 +36,9 @@ export class SubmitJobFormComponent extends React.Component<{
         ) ? "success" : "error";
       case "id":
         if (job.id) {
+          if (appStore.findJob(job.id)) {
+            return "error";
+          }
           return "success";
         }
         break;
@@ -125,14 +128,12 @@ export class SubmitJobFormComponent extends React.Component<{
 
     return <Form>
       <FormGroup validationState={this.getValidationState("id")}>
-        <ControlLabel>ID</ControlLabel>
-        <FormControl type="text" placeholder=""
+        <FormControl type="text" placeholder="ID"
           value={job.id} onChange={this.onInputChange.bind(this, "id")} />
       </FormGroup>
 
       <FormGroup validationState={this.getValidationState("commit")}>
-        <ControlLabel>Git Commit Hash</ControlLabel>
-        <FormControl type="text" placeholder="e.g. 9368c05596d517c280146a1b815ec0ecc25e787c"
+        <FormControl type="text" placeholder="Git Commit Hash e.g. 9368c05596d517c280146a1b815ec0ecc25e787c"
           value={job.commit} onChange={this.onInputChange.bind(this, "commit")} />
       </FormGroup>
 
@@ -147,33 +148,29 @@ export class SubmitJobFormComponent extends React.Component<{
       </FormGroup>
 
       <FormGroup>
-        <ControlLabel>Extra CLI Options</ControlLabel>
-        <FormControl type="text"
+        <FormControl type="text" placeholder="Extra CLI Options"
           value={job.extraOptions} onChange={this.onInputChange.bind(this, "extraOptions")} />
       </FormGroup>
 
       <FormGroup>
-        <ControlLabel>Extra Build Options</ControlLabel>
-        <FormControl type="text"
+        <FormControl type="text" placeholder="Extra Build Options"
           value={job.buildOptions} onChange={this.onInputChange.bind(this, "buildOptions")} />
       </FormGroup>
 
       <FormGroup validationState={this.getValidationState("nick")}>
-        <ControlLabel>Your IRC nick (for auto-notifications on #daala)</ControlLabel>
-        <FormControl type="text"
+        <FormControl type="text" placeholder="Your IRC nick (for auto-notifications on #daala)"
           value={job.nick} onChange={this.onInputChange.bind(this, "nick")} />
       </FormGroup>
 
       <FormGroup validationState={this.getValidationState("qualities")}>
-        <ControlLabel>Custom Qualities</ControlLabel>
-        <FormControl type="text" placeholder="30 40 50 ..."
+        <FormControl type="text" placeholder="Custom Qualities 30 40 50 ..."
           value={job.qualities} onChange={this.onInputChange.bind(this, "qualities")} />
       </FormGroup>
 
       <FormGroup>
         <ButtonToolbar>
-          <Button disabled={this.getValidationState("all") === "error"} bsStyle="success" onClick={this.onCreate.bind(this)}>Submit</Button>
-          <Button bsStyle="danger" onClick={this.onCancel.bind(this)}>Cancel</Button>
+          <Button bsSize="small" disabled={this.getValidationState("all") === "error"} bsStyle="success" onClick={this.onCreate.bind(this)}>Submit</Button>
+          <Button bsSize="small" bsStyle="danger" onClick={this.onCancel.bind(this)}>Cancel</Button>
         </ButtonToolbar>
       </FormGroup>
     </Form>

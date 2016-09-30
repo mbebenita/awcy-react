@@ -27,7 +27,7 @@ import { Promise } from "es6-promise"
 import { AsyncEvent } from 'ts-events';
 
 // let baseUrl = "https://arewecompressedyet.com/";
-let baseUrl = "https://beta.arewecompressedyet.com/";
+export let baseUrl = "https://beta.arewecompressedyet.com/";
 
 export function shallowEquals(a, b): boolean {
   if (a === b) return true;
@@ -305,6 +305,17 @@ export class Job {
 
   }
 
+  logInterval: any;
+
+  startPollingLog() {
+    if (this.logInterval) {
+      clearInterval(this.logInterval);
+    }
+    this.logInterval = setInterval(() => {
+      this.loadLog(true);
+    }, 10000);
+  }
+
   loadLog(refresh = false): Promise<string> {
     if (this.log && !refresh) {
       return Promise.resolve(this.log);
@@ -487,7 +498,7 @@ export class AppStore {
   isLoggedIn: boolean = false;
   password: string = "";
   onLoggedInStateChanged = new AsyncEvent<string>();
-  inMockMode = true;
+  inMockMode = false;
   constructor() {
     this.jobs = new Jobs();
     this.selectedJobs = new Jobs();
@@ -541,7 +552,7 @@ export class AppStore {
   }
   submitJob(job: Job) {
     job.status = JobStatus.Unknown;
-    this.jobs.addJob(job);
+    this.jobs.prependJob(job);
     if (this.inMockMode) return;
     postXHR(baseUrl + "submit/job", {
       key: this.password,
@@ -588,7 +599,7 @@ export class AppStore {
       Promise.all([this.loadSets(), this.loadStatus()]).then(() => {
         this.processUrlParameters();
       });
-      // this.startPolling();
+      this.startPolling();
     });
     if (localStorage["password"]) {
       this.login(localStorage["password"]);
@@ -668,25 +679,31 @@ export class AppStore {
 
   loadJobs(): Promise<boolean> {
     function fromStatus(status: string): JobStatus {
-      return JobStatus.Completed;
       switch (status) {
-        case "unknown": return JobStatus.Unknown;
-        case "new": return JobStatus.New;
-        case "building": return JobStatus.Building;
-        case "running": return JobStatus.Running;
-        case "completed": return JobStatus.Completed;
-        case "canceled": return JobStatus.Canceled;
-        case "failed": return JobStatus.Failed;
+        case "new":
+          return JobStatus.New;
+        case "building":
+          return JobStatus.Building;
+        case "running":
+          return JobStatus.Running;
+        case "completed":
+          return JobStatus.Completed;
+        case "canceled":
+          return JobStatus.Canceled;
+        case "failed":
+          return JobStatus.Failed;
+        default:
+          return JobStatus.Unknown;
       }
     }
     return new Promise((resolve, reject) => {
       loadXHR(baseUrl + "list.json", (json) => {
-        json = json.filter(job => job.info.task === "objective-1-fast" && job.info.codec === "av1");
+        // json = json.filter(job => job.info.task === "objective-1-fast" && job.info.codec === "av1");
         json.sort(function (a, b) {
           return (new Date(b.date) as any) - (new Date(a.date) as any);
         });
         let changed = false;
-        json = json.slice(0, 100);
+        json = json.slice(0, 256);
         json.forEach(o => {
           let job = this.findJob(o.run_id);
           if (job) {

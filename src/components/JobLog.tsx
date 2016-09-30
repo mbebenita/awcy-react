@@ -2,6 +2,7 @@ import * as React from "react";
 import { Panel } from "react-bootstrap";
 import { Job } from "../stores/Stores";
 
+
 export class JobLogComponent extends React.Component<{
   job: Job
 }, {
@@ -18,7 +19,8 @@ export class JobLogComponent extends React.Component<{
   componentDidMount() {
     let job = this.props.job;
     if (job) {
-      job.onChange.attach(this.onChange);
+      job.onLogChange.attach(this.onChange);
+      job.startPollingLog();
       this.setState({isLoading: true});
       job.loadLog(true).then(() => {
         this.setState({isLoading: false});
@@ -27,7 +29,7 @@ export class JobLogComponent extends React.Component<{
   }
   componentWillUnmount() {
     let job = this.props.job;
-    job.onChange.detach(this.onChange);
+    job.onLogChange.detach(this.onChange);
   }
   render() {
     let job = this.props.job;

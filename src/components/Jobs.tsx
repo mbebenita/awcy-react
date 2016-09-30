@@ -16,6 +16,7 @@ interface JobsProps {
   jobStatusFilter?: JobStatus;
   detailed?: boolean;
   showFilters?: boolean;
+  showCommands?: boolean;
   listHeight: number
 }
 
@@ -121,10 +122,11 @@ export class JobsComponent extends React.Component<JobsProps, {
   makeJobList() {
     let jobs = this.props.jobs.jobs;
     let filters = this.props.showFilters ? this.makeFilters() : null;
+    let commands = this.props.showCommands ? <div style={{ width: "100%", paddingBottom: "10px" }}>
+        <Button bsSize="small" bsStyle="success" disabled={!appStore.isLoggedIn} onClick={this.onSubmitNewJobClick.bind(this)}>Submit New Job</Button>
+      </div> : null;
     return <div>
-      <div style={{ width: "100%", paddingBottom: "10px" }}>
-        <Button bsStyle="success" disabled={!appStore.isLoggedIn} onClick={this.onSubmitNewJobClick.bind(this)}>Submit New Job</Button>
-      </div>
+      {commands}
       {filters}
       <div style={{bottom: 0, height: this.props.listHeight, overflow: "scroll", overflowX: "hidden"}}>
         <ListGroup componentClass="ul">

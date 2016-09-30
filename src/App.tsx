@@ -54,7 +54,7 @@ export class App extends React.Component<void, void> {
           </Tab>
           <Tab eventKey={2} key="jobs" title="Jobs">
             <div style={{ padding: 10 }}>
-              <JobsComponent jobStatusFilter={JobStatus.NotCompleted} jobs={appStore.jobs} listHeight={height - 200} />
+              <JobsComponent showCommands jobStatusFilter={JobStatus.NotCompleted} jobs={appStore.jobs} listHeight={height - 200} />
             </div>
           </Tab>
           <Tab eventKey={3} key="share" title="Share">

@@ -1,12 +1,15 @@
 import * as React from "react";
 import { Button, Table, Panel } from "react-bootstrap";
-import { AppDispatcher, CancelJob, SubmitJob, SelectJob, DeselectJob, appStore, Job, Jobs, timeSince, daysSince, JobStatus} from "../stores/Stores";
+import { loadXHR, baseUrl, AppDispatcher, CancelJob, SubmitJob, SelectJob, DeselectJob, appStore, Job, Jobs, timeSince, daysSince, JobStatus} from "../stores/Stores";
 import { JobComponent } from "./Job";
 import { JobLogComponent } from "./JobLog";
 
-export class DebugComponent extends React.Component<void, void> {
+export class DebugComponent extends React.Component<void, {
+  log: string
+}> {
   constructor() {
     super();
+    this.state = { log: "" };
   }
   getRandomJob(filter: JobStatus) {
     let jobs = appStore.jobs.jobs;
@@ -36,16 +39,36 @@ export class DebugComponent extends React.Component<void, void> {
     let job = this.getRandomJob(JobStatus.Completed);
     if (job) AppDispatcher.dispatch(new SelectJob(job));
   }
+  onGetRunStatus() {
+    loadXHR(baseUrl + "run_status.json", (json) => {
+      this.setState({log: JSON.stringify(json, null, 2)});
+    });
+  }
+  onGetBuildStatus() {
+    loadXHR(baseUrl + "build_job_queue.json", (json) => {
+      this.setState({log: JSON.stringify(json, null, 2)});
+    });
+  }
+  onGetList() {
+    loadXHR(baseUrl + "list.json", (json) => {
+      this.setState({log: JSON.stringify(json, null, 2)});
+    });
+  }
   onPollClick() {
     appStore.poll();
   }
   render() {
     console.debug("Rendering Debug");
-    return <Panel>
-      <Button onClick={this.onSubmitJobClick.bind(this)}>Submit Random Job</Button>{' '}
-      <Button onClick={this.onCancelJobClick.bind(this)}>Cancel Random Job</Button>{' '}
-      <Button onClick={this.onSelectJobClick.bind(this)}>Select Random Job</Button>{' '}
-      <Button onClick={this.onPollClick.bind(this)}>Poll Server</Button>
+    // <Button onClick={this.onSubmitJobClick.bind(this)}>Submit Random Job</Button>{' '}
+    // <Button onClick={this.onCancelJobClick.bind(this)}>Cancel Random Job</Button>{' '}
+    // <Button onClick={this.onSelectJobClick.bind(this)}>Select Random Job</Button>{' '}
+    return <div><Panel>
+      <Button onClick={this.onPollClick.bind(this)}>Poll Server</Button>{' '}
+      <Button onClick={this.onGetRunStatus.bind(this)}>Get run_status.json</Button>{' '}
+      <Button onClick={this.onGetBuildStatus.bind(this)}>Get build_status.json</Button>{' '}
+      <Button onClick={this.onGetList.bind(this)}>Get list.json</Button>{' '}
     </Panel>
+    <pre className="pre">{this.state.log}</pre>
+    </div>
   }
 }

@@ -352,13 +352,11 @@ export class LoginComponent extends React.Component<void, {
     return appStore.isLoggedIn ? "success" : "error";
   }
   render() {
-    return <Form>
-      <FormGroup validationState={this.getValidationState()}>
+    return <FormGroup validationState={this.getValidationState()}>
         <ControlLabel>AWCY API Key</ControlLabel>
         <FormControl type="text" placeholder=""
           value={this.state.password} onChange={this.onInputChange.bind(this)} />
         <FormControl.Feedback/>
       </FormGroup>
-    </Form>
   }
 }

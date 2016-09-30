@@ -137,7 +137,7 @@ export class JobComponent extends React.Component<JobProps, {
       award = <div style={{paddingRight: "10px", display: "flex", justifyContent: "center"}}><img src={src} style={{height: 32, padding: 2}}/></div>
     }
 
-    return <div className="list-group-item" style={{ borderRight, borderLeft, backgroundColor}}>
+    return <div className="list-group-item job" style={{ borderRight, borderLeft, backgroundColor}}>
       <Modal show={this.state.showCancelModal} onHide={this.abortCancel.bind(this)}>
         <Modal.Header closeButton>
           <Modal.Title>Cancel job?</Modal.Title>
@@ -150,7 +150,6 @@ export class JobComponent extends React.Component<JobProps, {
           <Button onClick={this.abortCancel.bind(this)}>No</Button>
         </Modal.Footer>
       </Modal>
-      {jobStatus}
       {hasAnalyzer}
       {progress}
       <div style={{display: "flex", flexDirection: "row", justifyContent: "space-between"}}>

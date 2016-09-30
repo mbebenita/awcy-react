@@ -29,6 +29,20 @@ import { AsyncEvent } from 'ts-events';
 // let baseUrl = "https://arewecompressedyet.com/";
 let baseUrl = "https://beta.arewecompressedyet.com/";
 
+export function shallowEquals(a, b): boolean {
+  if (a === b) return true;
+  let aKeys = Object.keys(a);
+  let bKeys = Object.keys(b);
+  if (aKeys.length != bKeys.length) return false;
+  return aKeys.every(key => {
+    if (!(key in b)) {
+      return false;
+    }
+    if (a[key] !== b[key]) return false;
+    return true;
+  });
+}
+
 function zip<T>(a: string[], b: T[]): { [index: string]: T } {
   let o = {};
   for (let i = 0; i < a.length; i++) {
@@ -157,13 +171,14 @@ export function timeSince(date: Date) {
 
 export enum JobStatus {
   None = 0,
-  New = 1,
-  Failed = 2,
-  Running = 4,
-  Building = 8,
-  Canceled = 16,
-  Completed = 32,
-  All = Running | Building | Completed | New | Failed | Completed | Canceled,
+  Unknown = 1,
+  New = 2,
+  Failed = 4,
+  Running = 8,
+  Building = 16,
+  Canceled = 32,
+  Completed = 64,
+  All = Running | Building | Completed | New | Failed | Completed | Canceled | Unknown,
   NotCompleted = All & ~Completed,
   Cancelable = New | Running | Building
 }
@@ -274,7 +289,7 @@ export class Job {
   taskType: string = "";
   runABCompare: boolean = false;
   saveEncodedFiles: boolean = false;
-  status: JobStatus = JobStatus.None;
+  status: JobStatus = JobStatus.Unknown;
   date: Date;
 
   progress: JobProgress = new JobProgress(0, 0);
@@ -525,7 +540,7 @@ export class AppStore {
     });
   }
   submitJob(job: Job) {
-    job.status = JobStatus.New;
+    job.status = JobStatus.Unknown;
     this.jobs.addJob(job);
     if (this.inMockMode) return;
     postXHR(baseUrl + "submit/job", {
@@ -543,7 +558,7 @@ export class AppStore {
     });
   }
   cancelJob(job: Job) {
-    job.status = JobStatus.Canceled;
+    job.status = JobStatus.Unknown;
     job.onChange.post("");
     this.jobs.onChange.post("");
     if (this.inMockMode) return;
@@ -655,7 +670,7 @@ export class AppStore {
     function fromStatus(status: string): JobStatus {
       return JobStatus.Completed;
       switch (status) {
-        case "none": return JobStatus.None;
+        case "unknown": return JobStatus.Unknown;
         case "new": return JobStatus.New;
         case "building": return JobStatus.Building;
         case "running": return JobStatus.Running;

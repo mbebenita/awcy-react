@@ -1,6 +1,6 @@
 import * as React from "react";
 import { Table, Panel } from "react-bootstrap";
-import { appStore, Job, Jobs, timeSince, daysSince, JobStatus} from "../stores/Stores";
+import { shallowEquals, appStore, Job, Jobs, timeSince, daysSince, JobStatus} from "../stores/Stores";
 import { JobComponent } from "./Job";
 import { JobLogComponent } from "./JobLog";
 

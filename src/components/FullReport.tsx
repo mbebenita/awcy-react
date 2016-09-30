@@ -11,11 +11,12 @@ import { AnalyzerVideoSelectorComponent, AnalyzerComponent } from "./Widgets";
 import { JobComponent } from "./Job";
 import { JobLogComponent } from "./JobLog";
 
-import { Jobs, Job, JobStatus, loadXHR, ReportField, reportFieldNames, metricNames, metricNameToReportFieldIndex } from "../stores/Stores";
+import { shallowEquals, Jobs, Job, JobStatus, loadXHR, ReportField, reportFieldNames, metricNames, metricNameToReportFieldIndex } from "../stores/Stores";
 declare var google: any;
 declare var tinycolor: any;
 declare var require: any;
 let Select = require('react-select');
+
 
 export class FullReportComponent extends React.Component<{
   jobs: Jobs;
@@ -45,6 +46,12 @@ export class FullReportComponent extends React.Component<{
       this.load();
     });
     this.load();
+  }
+  shouldComponentUpdate(nextProps, nextState) {
+    if (shallowEquals(this.props, nextProps) && shallowEquals(this.state, nextState)) {
+      return false;
+    }
+    return true;
   }
   load() {
     let jobs = this.props.jobs.jobs.filter(job => job.status === JobStatus.Completed);
@@ -173,8 +180,14 @@ export class FullReportComponent extends React.Component<{
     });
 
     let tables = [];
+    let brokenJobs = jobs.filter(job => !job.report);
+    if (brokenJobs.length) {
+      return <Panel>
+        Jobs [{brokenJobs.map(job => job.id).join(", ")}] don't have valid reports.
+      </Panel>
+    }
+
     let job = jobs[0];
-    let otherJob = jobs[1];
     let metrics = this.state.metrics;
     let qualities = this.state.qualities;
     for (let video in job.report) {

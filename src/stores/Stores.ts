@@ -147,6 +147,12 @@ export function daysSince(date: Date) {
   return Math.round(Math.abs(diff / oneDay));
 }
 
+export function secondsSince(date: Date) {
+  var oneSecond = 1000;
+  let diff = new Date().getTime() - date.getTime();
+  return Math.round(Math.abs(diff / oneSecond));
+}
+
 export function minutesSince(date: Date) {
   var oneSecond = 1000;
   var oneMinute = 60 * oneSecond;
@@ -170,17 +176,19 @@ export function timeSince(date: Date) {
 }
 
 export enum JobStatus {
-  None = 0,
-  Unknown = 1,
-  New = 2,
-  Failed = 4,
-  Running = 8,
-  Building = 16,
-  Canceled = 32,
-  Completed = 64,
-  All = Running | Building | Completed | New | Failed | Completed | Canceled | Unknown,
+  None          = 0,
+  Unknown       = 1,
+  New           = 2,
+  Failed        = 4,
+  Running       = 8,
+  Building      = 16,
+  Waiting       = 32,
+  Canceled      = 64,
+  Completed     = 128,
+  BuildFailed   = 256,
+  All = Running | Building | Completed | New | Failed | Waiting | Completed | Canceled | Unknown | BuildFailed,
   NotCompleted = All & ~Completed,
-  Cancelable = New | Running | Building
+  Cancelable = New | Running | Building | Waiting
 }
 
 export enum ReportField {
@@ -313,7 +321,7 @@ export class Job {
     }
     this.logInterval = setInterval(() => {
       this.loadLog(true);
-    }, 10000);
+    }, 50000);
   }
 
   loadLog(refresh = false): Promise<string> {
@@ -579,18 +587,21 @@ export class AppStore {
     });
   }
 
+  lastPoll: Date = new Date();
+
   poll() {
     console.info("Polling ...");
     this.loadJobs().then(() => {
       this.loadStatus();
       this.loadAWS();
+      this.lastPoll = new Date();
     });
   }
 
   startPolling() {
     setInterval(() => {
       this.poll();
-    }, 100000);
+    }, 10000);
   }
 
   load() {
@@ -684,6 +695,8 @@ export class AppStore {
           return JobStatus.New;
         case "building":
           return JobStatus.Building;
+        case "waiting":
+          return JobStatus.Waiting;
         case "running":
           return JobStatus.Running;
         case "completed":

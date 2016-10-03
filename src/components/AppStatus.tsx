@@ -1,9 +1,23 @@
 import * as React from "react";
 import { Table, Panel } from "react-bootstrap";
-import { shallowEquals, appStore, Job, Jobs, timeSince, daysSince, JobStatus} from "../stores/Stores";
+import { shallowEquals, appStore, Job, Jobs, timeSince, secondsSince, daysSince, JobStatus} from "../stores/Stores";
 import { JobComponent } from "./Job";
 import { JobLogComponent } from "./JobLog";
 
+export class RefreshComponent extends React.Component<void, void> {
+  timer: any = null
+  componentDidMount() {
+    this.timer = setInterval(() => {
+      this.forceUpdate();
+    });
+  }
+  componentDidUnmount() {
+    clearInterval(this.timer);
+  }
+  render() {
+    return <Panel>Last updated: {secondsSince(appStore.lastPoll)} seconds ago.</Panel>;
+  }
+}
 export class AppStatusComponent extends React.Component<void, {
     aws: any;
   }> {
@@ -19,7 +33,6 @@ export class AppStatusComponent extends React.Component<void, {
     });
   }
   render() {
-    console.debug("Rendering Log");
     let table = null;
     let status = "";
     if (this.state.aws) {
@@ -92,6 +105,7 @@ export class AppStatusComponent extends React.Component<void, {
       </Panel>);
     }
     return <div style={{height: "3000px"}}>
+      <RefreshComponent/>
       {jobInfos}
       <Panel header={"AWS Status " + status}>
         {table}

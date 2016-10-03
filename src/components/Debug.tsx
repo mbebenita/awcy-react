@@ -49,6 +49,11 @@ export class DebugComponent extends React.Component<void, {
       this.setState({log: JSON.stringify(json, null, 2)});
     });
   }
+  onMachineUsage() {
+    loadXHR(baseUrl + "machine_usage.json", (json) => {
+      this.setState({log: JSON.stringify(json, null, 2)});
+    });
+  }
   onGetList() {
     loadXHR(baseUrl + "list.json", (json) => {
       this.setState({log: JSON.stringify(json, null, 2)});
@@ -67,6 +72,7 @@ export class DebugComponent extends React.Component<void, {
       <Button onClick={this.onGetRunStatus.bind(this)}>Get run_status.json</Button>{' '}
       <Button onClick={this.onGetBuildStatus.bind(this)}>Get build_status.json</Button>{' '}
       <Button onClick={this.onGetList.bind(this)}>Get list.json</Button>{' '}
+      <Button onClick={this.onMachineUsage.bind(this)}>Get machine_usage.json</Button>{' '}
     </Panel>
     <pre className="pre">{this.state.log}</pre>
     </div>

@@ -53,17 +53,22 @@ export class App extends React.Component<void, void> {
           <JobsComponent showFilters jobStatusFilter={JobStatus.Completed} jobs={appStore.jobs} listHeight={height - 200} />
         </div>
       </Tab>,
-      <Tab eventKey={2} key="jobs" title="Jobs">
+      <Tab eventKey={2} key="jobs" title="Active Jobs">
         <div style={{ padding: 10 }}>
-          <JobsComponent showCommands jobStatusFilter={JobStatus.NotCompleted} jobs={appStore.jobs} listHeight={height - 200} />
+          <JobsComponent showCommands jobStatusFilter={JobStatus.Active} jobs={appStore.jobs} listHeight={height - 200} />
         </div>
       </Tab>,
-      <Tab eventKey={3} key="share" title="Share">
+      <Tab eventKey={3} key="all-jobs" title="All Jobs">
+        <div style={{ padding: 10 }}>
+          <JobsComponent showCommands jobStatusFilter={JobStatus.All} jobs={appStore.jobs} listHeight={height - 200} />
+        </div>
+      </Tab>,
+      <Tab eventKey={4} key="share" title="Share">
         <div style={{ padding: 10 }}>
           <ShareComponent/>
         </div>
       </Tab>,
-      <Tab eventKey={4} key="login" title="Login">
+      <Tab eventKey={5} key="login" title="Login">
         <div style={{ padding: 10 }}>
           <LoginComponent/>
         </div>
@@ -71,22 +76,22 @@ export class App extends React.Component<void, void> {
     ];
 
     let contentTabs = [
-      <Tab eventKey={5} key="graphs" title="Report">
+      <Tab eventKey={6} key="graphs" title="Report">
         <div style={{ padding: 10, height: height - 100, overflow: "scroll" }}>
           <FullReportComponent jobs={appStore.selectedJobs} />
         </div>
       </Tab>,
-      <Tab eventKey={6} key="logs" title="Logs">
+      <Tab eventKey={7} key="logs" title="Logs">
         <div style={{ padding: 10, height: height - 100, overflow: "scroll" }}>
           <AppLogsComponent/>
         </div>
       </Tab>,
-      <Tab eventKey={7} key="status" title="Status">
+      <Tab eventKey={8} key="status" title="Status">
         <div style={{ padding: 10, height: height - 100, overflow: "scroll" }}>
           <AppStatusComponent/>
         </div>
       </Tab>,
-      <Tab eventKey={8} key="debug" title="Debug">
+      <Tab eventKey={9} key="debug" title="Debug">
         <div style={{ padding: 10, height: height - 100, overflow: "scroll" }}>
           <DebugComponent/>
         </div>
@@ -108,7 +113,7 @@ export class App extends React.Component<void, void> {
         </Tabs>
       </div>
       <div className="content">
-        <Tabs defaultActiveKey={5} animation={false} id="noanim-tab-example">
+        <Tabs defaultActiveKey={6} animation={false} id="noanim-tab-example">
           {contentTabs}
         </Tabs>
       </div>

@@ -11,7 +11,7 @@ export class RefreshComponent extends React.Component<void, void> {
       this.forceUpdate();
     });
   }
-  componentDidUnmount() {
+  componentWillUnmount() {
     clearInterval(this.timer);
   }
   render() {
@@ -75,7 +75,7 @@ export class AppStatusComponent extends React.Component<void, {
 
     let jobInfos = [];
     appStore.jobs.jobs.forEach(job => {
-      if (job.status === JobStatus.Running) {
+      if (job.status & JobStatus.Active) {
         jobInfos.push(<Panel key={job.id}>
           <JobComponent detailed job={job}/>
           <JobLogComponent job={job} />

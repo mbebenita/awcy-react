@@ -186,9 +186,10 @@ export enum JobStatus {
   Canceled      = 64,
   Completed     = 128,
   BuildFailed   = 256,
-  All = Running | Building | Completed | New | Failed | Waiting | Completed | Canceled | Unknown | BuildFailed,
-  NotCompleted = All & ~Completed,
-  Cancelable = New | Running | Building | Waiting
+  All           = Running | Building | Completed | New | Failed | Waiting | Completed | Canceled | Unknown | BuildFailed,
+  Active        = New | Running | Building | Waiting,
+  NotCompleted  = All & ~Completed,
+  Cancelable    = New | Running | Building | Waiting
 }
 
 export enum ReportField {
@@ -321,7 +322,7 @@ export class Job {
     }
     this.logInterval = setInterval(() => {
       this.loadLog(true);
-    }, 50000);
+    }, 10000);
   }
 
   loadLog(refresh = false): Promise<string> {
@@ -601,7 +602,7 @@ export class AppStore {
   startPolling() {
     setInterval(() => {
       this.poll();
-    }, 10000);
+    }, 60000);
   }
 
   load() {

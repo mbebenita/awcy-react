@@ -28,6 +28,7 @@ import { AsyncEvent } from 'ts-events';
 
 // let baseUrl = "https://arewecompressedyet.com/";
 export let baseUrl = "https://beta.arewecompressedyet.com/";
+var inMockMode = false;
 
 export function shallowEquals(a, b): boolean {
   if (a === b) return true;
@@ -71,6 +72,7 @@ export function postXHR(path: string, o: any): Promise<boolean> {
       console.error(data + " " + xhr.response);
       reject(false);
     });
+    if (inMockMode) return;
     xhr.send(data);
   });
 }
@@ -447,9 +449,8 @@ export class Jobs {
       this.onChange.post("job-removed");
     }
   }
-  cancelAllJobs() {
-    this.jobs = [];
-    this.onChange.post("jobs-deleted");
+  getSelectedJobs(): Job [] {
+    return this.jobs.filter(job => job.selected);
   }
   getById(id: string) {
     for (let i = 0; i < this.jobs.length; i++) {
@@ -498,7 +499,6 @@ function getColorForString(s: string): string {
 let selectedNamePool = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
 export class AppStore {
   jobs: Jobs;
-  selectedJobs: Jobs;
   onChange = new AsyncEvent<string>();
   aws: any;
   onAWSChange = new AsyncEvent<string>();
@@ -507,10 +507,8 @@ export class AppStore {
   isLoggedIn: boolean = false;
   password: string = "";
   onLoggedInStateChanged = new AsyncEvent<string>();
-  inMockMode = false;
   constructor() {
     this.jobs = new Jobs();
-    this.selectedJobs = new Jobs();
     this.aws = {};
     AppDispatcher.register((action) => {
       if (action instanceof SelectJob) {
@@ -518,16 +516,14 @@ export class AppStore {
         job.selected = true;
         job.selectedName = selectedNamePool.shift();
         job.color = getColorForString(job.id);
-        job.onChange.post("job-changed");
-        this.selectedJobs.addJob(job);
+        job.onChange.post("");
       } else if (action instanceof DeselectJob) {
         let job = action.job;
         selectedNamePool.unshift(job.selectedName);
         job.selected = false;
         job.selectedName = "";
         job.color = "";
-        job.onChange.post("job-changed");
-        this.selectedJobs.removeJob(job);
+        job.onChange.post("");
       } else if (action instanceof SubmitJob) {
         this.submitJob(action.job);
       } else if (action instanceof CancelJob) {
@@ -562,7 +558,6 @@ export class AppStore {
   submitJob(job: Job) {
     job.status = JobStatus.Unknown;
     this.jobs.prependJob(job);
-    if (this.inMockMode) return;
     postXHR(baseUrl + "submit/job", {
       key: this.password,
       run_id: job.id,
@@ -581,7 +576,6 @@ export class AppStore {
     job.status = JobStatus.Unknown;
     job.onChange.post("");
     this.jobs.onChange.post("");
-    if (this.inMockMode) return;
     postXHR(baseUrl + "submit/cancel", {
       key: this.password,
       run_id: job.id,

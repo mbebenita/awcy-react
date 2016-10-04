@@ -78,7 +78,7 @@ export class App extends React.Component<void, void> {
     let contentTabs = [
       <Tab eventKey={6} key="graphs" title="Report">
         <div style={{ padding: 10, height: height - 100, overflow: "scroll" }}>
-          <FullReportComponent jobs={appStore.selectedJobs} />
+          <FullReportComponent/>
         </div>
       </Tab>,
       <Tab eventKey={7} key="logs" title="Logs">

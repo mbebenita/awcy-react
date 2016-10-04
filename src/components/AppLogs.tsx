@@ -9,14 +9,15 @@ export class AppLogsComponent extends React.Component<void, void> {
     super();
   }
   componentDidMount() {
-    appStore.selectedJobs.onChange.attach(() => {
+    appStore.jobs.onChange.attach(() => {
       this.forceUpdate();
     });
   }
   render() {
     console.debug("Rendering Logs");
     let logs = [];
-    appStore.selectedJobs.jobs.forEach(job => {
+    let jobs = appStore.jobs.getSelectedJobs();
+    jobs.forEach(job => {
       logs.push(<div key={job.id}>
         <JobComponent detailed job={job}/>
         <JobLogComponent job={job} />

@@ -11,17 +11,14 @@ import { AnalyzerVideoSelectorComponent, AnalyzerComponent } from "./Widgets";
 import { JobComponent } from "./Job";
 import { JobLogComponent } from "./JobLog";
 
-import { shallowEquals, Jobs, Job, JobStatus, loadXHR, ReportField, reportFieldNames, metricNames, metricNameToReportFieldIndex } from "../stores/Stores";
+import { appStore, shallowEquals, Jobs, Job, JobStatus, loadXHR, ReportField, reportFieldNames, metricNames, metricNameToReportFieldIndex } from "../stores/Stores";
 declare var google: any;
 declare var tinycolor: any;
 declare var require: any;
 let Select = require('react-select');
 
 
-export class FullReportComponent extends React.Component<{
-  jobs: Jobs;
-}, {
-    jobs: Job [];
+export class FullReportComponent extends React.Component<void, {
     metrics: string[],
     videos: string[],
     qualities: number[],
@@ -32,7 +29,6 @@ export class FullReportComponent extends React.Component<{
   constructor() {
     super();
     this.state = {
-      jobs: [],
       fit: true,
       log: true,
       stack: false,
@@ -42,19 +38,20 @@ export class FullReportComponent extends React.Component<{
     };
   }
   componentWillMount() {
-    this.props.jobs.onChange.attach(name => {
+    appStore.jobs.onChange.attach(name => {
       this.load();
     });
     this.load();
   }
   shouldComponentUpdate(nextProps, nextState) {
     if (shallowEquals(this.props, nextProps) && shallowEquals(this.state, nextState)) {
-      return false;
+      // return false;
     }
     return true;
   }
   load() {
-    let jobs = this.props.jobs.jobs.filter(job => job.status === JobStatus.Completed);
+    // let jobs = this.props.jobs.jobs.filter(job => job.status === JobStatus.Completed);
+    let jobs = appStore.jobs.getSelectedJobs();
     Promise.all(jobs.map(job => {
       return job.loadReport();
     })).catch(() => {
@@ -65,7 +62,7 @@ export class FullReportComponent extends React.Component<{
   }
   getSeries(name: string, metric: string): ScatterPlotSeries[] {
     let series = [];
-    let jobs = this.state.jobs;
+    let jobs = appStore.jobs.getSelectedJobs();
     let reportFieldIndex = metricNameToReportFieldIndex(metric);
     jobs.forEach(job => {
       let values = [];
@@ -105,7 +102,7 @@ export class FullReportComponent extends React.Component<{
     this.setState({ stack: !this.state.stack } as any);
   }
   renderVideoReport(video: string, stack: boolean, showTabs = true) {
-    let jobs = this.state.jobs;
+    let jobs = appStore.jobs.getSelectedJobs();
     let metrics = this.state.metrics;
     let qualities = this.state.qualities;
     let headers = metrics.map(name =>
@@ -167,10 +164,10 @@ export class FullReportComponent extends React.Component<{
   }
   render() {
     console.debug("Rendering Full Report");
-    let jobs = this.state.jobs;
+    let jobs = appStore.jobs.getSelectedJobs();
     if (jobs.length == 0) {
       return <Panel>
-        No completed runs selected.
+        No runs selected.
       </Panel>
     }
 
@@ -182,7 +179,15 @@ export class FullReportComponent extends React.Component<{
     let tables = [];
     let brokenJobs = jobs.filter(job => !job.report);
     if (brokenJobs.length) {
+      let logs = [];
+      jobs.forEach(job => {
+        logs.push(<div key={job.id}>
+          <JobComponent detailed job={job}/>
+          <JobLogComponent job={job} />
+        </div>);
+      });
       return <Panel>
+        {logs}
         Jobs [{brokenJobs.map(job => job.id).join(", ")}] don't have valid reports.
       </Panel>
     }
@@ -205,7 +210,7 @@ export class FullReportComponent extends React.Component<{
         {selectedJobs}
       </Panel>
       <Panel>
-        <JobSelectorComponent metrics={this.state.metrics} jobs={this.state.jobs} onChange={this.onJobSelectorChange.bind(this)} />
+        <JobSelectorComponent metrics={this.state.metrics} jobs={jobs} onChange={this.onJobSelectorChange.bind(this)} />
       </Panel>
       <div style={{ }}>
         <Button active={this.state.fit} onClick={this.onFitClick.bind(this)}>Fit Charts</Button>{' '}

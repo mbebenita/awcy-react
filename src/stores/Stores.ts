@@ -178,11 +178,18 @@ export function timeSince(date: Date) {
   let diff = new Date().getTime() - date.getTime();
   var days = Math.round(Math.abs(diff / oneDay));
   var hours = Math.round(Math.abs(diff % oneDay) / oneHour);
-  let s = "";
+  var minutes = Math.round(Math.abs(diff % oneHour) / oneMinute);
+  let s = [];
   if (days > 0) {
-    s += `${days} days, `
+    s.push(`${days} day${days === 1 ? "" : "s"}`);
   }
-  return s + `${hours} hour${hours === 1 ? "" : "s"} ago`;
+  if (hours > 0) {
+    s.push(`${hours} hour${hours === 1 ? "" : "s"}`);
+  }
+  if (minutes > 0) {
+    s.push(`${minutes} minute${minutes === 1 ? "" : "s"}`);
+  }
+  return s.join(", ") + " ago";
 }
 
 export enum JobStatus {
@@ -458,7 +465,9 @@ export class Jobs {
     }
   }
   getSelectedJobs(): Job [] {
-    return this.jobs.filter(job => job.selected);
+    return this.jobs.filter(job => job.selected).sort((a, b) => {
+      return a.selectedName.localeCompare(b.selectedName);
+    });
   }
   getById(id: string) {
     for (let i = 0; i < this.jobs.length; i++) {

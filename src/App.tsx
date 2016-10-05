@@ -48,7 +48,7 @@ export class App extends React.Component<void, void> {
     let mergeTabs = width < 1024;
 
     let sidebarTabs = [
-      <Tab eventKey={1} key="runs" title="Runs">
+      <Tab eventKey={1} key="runs" title="Completed Runs">
         <div style={{ padding: 10 }}>
           <JobsComponent showFilters jobStatusFilter={JobStatus.Completed} jobs={appStore.jobs} listHeight={height - 200} />
         </div>
@@ -66,11 +66,6 @@ export class App extends React.Component<void, void> {
       <Tab eventKey={4} key="share" title="Share">
         <div style={{ padding: 10 }}>
           <ShareComponent/>
-        </div>
-      </Tab>,
-      <Tab eventKey={5} key="login" title="Login">
-        <div style={{ padding: 10 }}>
-          <LoginComponent/>
         </div>
       </Tab>
     ];
@@ -94,6 +89,11 @@ export class App extends React.Component<void, void> {
       <Tab eventKey={9} key="debug" title="Debug">
         <div style={{ padding: 10, height: height - 100, overflow: "scroll" }}>
           <DebugComponent/>
+        </div>
+      </Tab>,
+      <Tab eventKey={10} key="login" title="Login">
+        <div style={{ padding: 10 }}>
+          <LoginComponent/>
         </div>
       </Tab>
     ];

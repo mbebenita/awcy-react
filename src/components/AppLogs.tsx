@@ -5,13 +5,18 @@ import { JobComponent } from "./Job";
 import { JobLogComponent } from "./JobLog";
 
 export class AppLogsComponent extends React.Component<void, void> {
+  onChange: any;
   constructor() {
     super();
-  }
-  componentDidMount() {
-    appStore.jobs.onChange.attach(() => {
+    this.onChange = () => {
       this.forceUpdate();
-    });
+    };
+  }
+  componentWillMount() {
+    appStore.jobs.onChange.attach(this.onChange);
+  }
+  componentWillUnmount() {
+    appStore.jobs.onChange.detach(this.onChange);
   }
   render() {
     console.debug("Rendering Logs");

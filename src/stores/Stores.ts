@@ -508,7 +508,7 @@ export class AppStore {
   password: string = "";
   onLoggedInStateChanged = new AsyncEvent<string>();
   constructor() {
-    this.jobs = new Jobs();
+    let jobs = this.jobs = new Jobs();
     this.aws = {};
     AppDispatcher.register((action) => {
       if (action instanceof SelectJob) {
@@ -517,6 +517,7 @@ export class AppStore {
         job.selectedName = selectedNamePool.shift();
         job.color = getColorForString(job.id);
         job.onChange.post("");
+        jobs.onChange.post("");
       } else if (action instanceof DeselectJob) {
         let job = action.job;
         selectedNamePool.unshift(job.selectedName);
@@ -524,10 +525,13 @@ export class AppStore {
         job.selectedName = "";
         job.color = "";
         job.onChange.post("");
+        jobs.onChange.post("");
       } else if (action instanceof SubmitJob) {
         this.submitJob(action.job);
+        jobs.onChange.post("");
       } else if (action instanceof CancelJob) {
         this.cancelJob(action.job);
+        jobs.onChange.post("");
       } else if (action instanceof AnalyzeFile) {
         this.analyzedFiles.push({job: null, decoderUrl: "http://aomanalyzer.org/bin/decoder.js", videoUrl: "crosswalk_30.ivf"})
         this.onAnalyzedFilesChanged.post("change");

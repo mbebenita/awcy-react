@@ -26,6 +26,7 @@ export class FullReportComponent extends React.Component<void, {
     log: boolean;
     stack: boolean;
   }> {
+  onChange: any;
   constructor() {
     super();
     this.state = {
@@ -36,28 +37,25 @@ export class FullReportComponent extends React.Component<void, {
       videos: [],
       qualities: []
     };
+    this.onChange = () => {
+      this.load();
+    };
   }
   componentWillMount() {
-    appStore.jobs.onChange.attach(name => {
-      this.load();
-    });
+    appStore.jobs.onChange.attach(this.onChange);
     this.load();
   }
-  shouldComponentUpdate(nextProps, nextState) {
-    if (shallowEquals(this.props, nextProps) && shallowEquals(this.state, nextState)) {
-      // return false;
-    }
-    return true;
+  componentWillUnmount() {
+    appStore.jobs.onChange.detach(this.onChange);
   }
   load() {
-    // let jobs = this.props.jobs.jobs.filter(job => job.status === JobStatus.Completed);
     let jobs = appStore.jobs.getSelectedJobs();
     Promise.all(jobs.map(job => {
       return job.loadReport();
     })).catch(() => {
-      this.setState({jobs} as any);
+      this.forceUpdate();
     }).then(data => {
-      this.setState({jobs} as any);
+      this.forceUpdate();
     });
   }
   getSeries(name: string, metric: string): ScatterPlotSeries[] {

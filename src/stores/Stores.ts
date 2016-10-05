@@ -95,7 +95,11 @@ export function loadXHR2<T>(path: string, type = "json"): Promise<T> {
       let response = this.responseText;
       if (type === "json") {
         response = response.replace(/NaN/g, "null");
-        response = response ? JSON.parse(response) : null;
+        try {
+          response = response ? JSON.parse(response) : null;
+        } catch (x) {
+          reject();
+        }
       }
       resolve(response);
     });
@@ -119,7 +123,11 @@ export function loadXHR(path: string, next: (json: any) => void, fail: () => voi
     let response = this.responseText;
     if (type === "json") {
       response = response.replace(/NaN/g, "null");
-      response = response ? JSON.parse(response) : null;
+      try {
+        response = response ? JSON.parse(response) : null;
+      } catch (x) {
+        response = null;
+      }
     }
     next(response);
   });
@@ -644,6 +652,10 @@ export class AppStore {
     }
     return new Promise((resolve, reject) => {
       loadXHR(url, (json) => {
+        if (!json) {
+          reject(null);
+          return;
+        }
         let report = BDRateReport.fromJSON(a, b, json);
         AppStore.bdRateReportCache[url] = report;
         resolve(report);
